@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Создавать игры</title>
+<meta name="version" content="PRE-ALFA 1.4">
+<meta name="theme-color" content="#c96442"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Игры">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%23c96442'/%3E%3Ccircle cx='24' cy='28' r='5' fill='%232a1a14'/%3E%3Ccircle cx='40' cy='28' r='5' fill='%232a1a14'/%3E%3Cpath d='M24 41q8 7 16 0' stroke='%232a1a14' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#faf9f5;--card:#fff;--ln:#e8e6dc;--tx:#1f1e1d;--mt:#73726c;--ac:#c96442;--acd:#b05535;--soft:#f0eee6;--ok:#2f7d5b;--e:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--soft);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:500;margin:0;letter-spacing:-.01em}
+h2{font-size:24px}h3{font-size:18px}
+svg{display:block}
+button{font-family:inherit;color:inherit}
+/* оболочка и меню */
+#shell{position:fixed;inset:0;z-index:2;background:var(--bg);display:flex;flex-direction:column;transform-origin:left center;transition:transform .5s var(--e),border-radius .5s var(--e),box-shadow .5s}
+body.dr #shell{transform:translateX(min(80vw,320px)) scale(.93);border-radius:28px;overflow:hidden;box-shadow:-10px 0 40px #1f1e1d22}
+#sc{position:absolute;inset:0;z-index:9;display:none}body.dr #sc{display:block}
+#drawer{overflow:auto;position:fixed;top:0;bottom:0;left:0;width:min(80vw,320px);z-index:1;display:flex;flex-direction:column;padding:max(24px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));opacity:0;transform:translateX(-24px);transition:opacity .4s,transform .5s var(--e)}
+body.dr #drawer{opacity:1;transform:none}
+#drawer .logo{font:500 28px Georgia,serif;padding:8px 12px 24px}
+.dn{display:flex;align-items:center;gap:16px;width:100%;border:0;background:none;padding:12px;border-radius:14px;font:500 17px inherit;font-family:inherit;cursor:pointer;text-align:left;transition:background .25s,transform .2s}
+.dn:active{transform:scale(.97)}.dn.on{background:var(--soft)}.dn:hover{background:var(--soft)}
+.dh{color:var(--mt);font-size:14px;padding:24px 12px 8px}
+.dfoot{margin-top:auto;display:flex;gap:12px;align-items:center}
+.avt{width:52px;height:52px;border-radius:50%;border:1px solid var(--ln);background:var(--card);display:grid;place-items:center;font-weight:600;flex:none}
+.pill{flex:1;height:52px;border-radius:26px;border:0;background:var(--tx);color:var(--bg);font:600 16px inherit;font-family:inherit;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s}
+.pill:active{transform:scale(.96)}
+/* шапка */
+header{flex:none;display:flex;align-items:center;gap:12px;padding:max(12px,env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--ln)}
+.rb{width:44px;height:44px;border-radius:50%;border:1px solid var(--ln);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:none;transition:transform .2s,background .2s}
+.rb:active{transform:scale(.92)}.rb:hover{background:var(--soft)}
+.ht{flex:1;min-width:0}.ht b{display:block;font:500 18px Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ht small{color:var(--mt);white-space:nowrap}
+.chip{border:1px solid var(--ln);background:var(--card);border-radius:22px;height:44px;padding:0 16px;display:flex;align-items:center;font-weight:600;flex:none}
+.chip.pop{animation:pop .5s var(--e)}
+.xb{height:4px;background:var(--soft);flex:none}.xb i{display:block;height:100%;background:var(--ac);width:0;transition:width .8s var(--e)}
+main{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.pg{max-width:720px;margin:0 auto;padding:16px;display:grid;gap:16px}
+.pg-in>*{animation:up .55s var(--e) both}.pg-in>*:nth-child(2){animation-delay:.07s}.pg-in>*:nth-child(3){animation-delay:.14s}.pg-in>*:nth-child(4){animation-delay:.21s}
+/* нижняя панель */
+nav{flex:none;border-top:1px solid var(--ln);background:var(--card);padding:8px 0 max(8px,env(safe-area-inset-bottom))}
+.bi{position:relative;display:grid;grid-template-columns:repeat(4,1fr);max-width:480px;margin:0 auto;padding:0 8px}
+.ind{position:absolute;top:0;bottom:0;left:8px;width:calc((100% - 16px)/4);padding:0 4px;transition:transform .5s var(--e),opacity .3s}
+.ind i{display:block;height:100%;border-radius:14px;background:var(--soft)}
+.bt{position:relative;z-index:1;border:0;background:none;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:500;color:var(--mt);cursor:pointer;transition:color .3s}
+.bt svg{transition:transform .4s var(--e)}.bt.on{color:var(--ac)}.bt.on svg{transform:translateY(-1px) scale(1.12)}
+/* элементы */
+.card{background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:20px}
+.card>h3{margin-bottom:8px}
+.hero p{color:var(--mt);margin:8px 0 20px}
+.btn{min-height:48px;background:var(--ac);color:#fff;border:0;border-radius:14px;padding:0 24px;font:600 16px inherit;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s var(--e),background .2s,opacity .2s}
+.btn:hover{background:var(--acd)}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.s{min-height:40px;padding:0 16px;font-size:14px;border-radius:12px}.btn.o{background:var(--card);color:var(--tx);border:1px solid var(--ln)}.btn.o:hover{background:var(--soft)}
+.row{display:flex;gap:16px;align-items:center;padding:16px 0;border-top:1px solid var(--ln)}
+h3+.row,.row.f{border-top:0}.row .t{flex:1;min-width:0}.row small{display:block;color:var(--mt);font-size:14px}
+.ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:26px;flex:none;transition:background .3s}
+.ico.l{width:72px;height:72px;font-size:36px;border-radius:20px}.ico.m{width:36px;height:36px;font-size:18px;border-radius:10px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-weight:600;color:var(--ac);flex:none}
+.bar{height:8px;background:var(--soft);border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);border-radius:8px;transition:width 1s var(--e)}
+label{display:block;font-weight:600;font-size:14px;margin:24px 0 8px}
+input[type=text]{width:100%;height:48px;padding:0 16px;border:1px solid var(--ln);border-radius:14px;font:16px inherit;font-family:inherit;background:var(--card);color:var(--tx);transition:border-color .2s,box-shadow .2s}
+input:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px #c9644222}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.opts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(min-width:560px){.opts{grid-template-columns:repeat(3,1fr)}}
+.opt{min-height:56px;border:1px solid var(--ln);background:var(--card);border-radius:14px;padding:8px 12px;font:500 15px inherit;font-family:inherit;cursor:pointer;text-align:left;transition:all .25s var(--e)}
+.opt:active{transform:scale(.96)}.opt.on{border-color:var(--ac);background:#c964420f;box-shadow:inset 0 0 0 1px var(--ac)}
+.opt:disabled{opacity:.45;cursor:not-allowed}.opt small{display:block;color:var(--mt);font-weight:400;font-size:12px}
+.g8{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.g8 .opt{min-height:44px;padding:0;text-align:center;font-size:20px}
+.sw{height:36px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .25s var(--e),border-color .2s}.sw:active{transform:scale(.88)}.sw.on{border-color:var(--tx);transform:scale(1.1)}
+.dim{color:var(--mt);font-size:14px}
+/* окна */
+.modal{position:fixed;inset:0;background:#1f1e1d66;display:flex;align-items:flex-end;justify-content:center;z-index:20}.modal.in{animation:fade .3s both}
+.modal.out{animation:fadeo .25s both}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92dvh;overflow:auto;border-radius:24px 24px 0 0;padding:24px 20px max(24px,env(safe-area-inset-bottom))}
+.modal.in .sheet{animation:sheet .55s var(--e) both}.modal.out .sheet{animation:sheeto .25s ease-in both}
+@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:24px}}
+.sh{display:flex;justify-content:space-between;align-items:center}
+.foot{display:flex;gap:12px;margin-top:24px}.foot .btn{flex:1}
+.tut{text-align:center;padding-top:32px}
+.tut .big{width:96px;height:96px;border-radius:28px;background:var(--ac);color:#fff;display:grid;place-items:center;margin:0 auto 24px;animation:pop .7s var(--e) both}
+.tut .sl{animation:slin .5s var(--e) both}.tut p{color:var(--mt);margin:12px 0 0}
+.dots{display:flex;gap:8px;justify-content:center;margin:24px 0 0}.dots i{height:8px;width:8px;border-radius:8px;background:var(--ln);transition:all .4s var(--e)}.dots i.on{width:28px;background:var(--ac)}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:12px 20px;border-radius:14px;z-index:30;font-size:15px;max-width:92%;animation:toast 2.6s var(--e) both}
+.card{transition:box-shadow .3s var(--e)}.card:hover{box-shadow:0 8px 24px #1f1e1d12}
+.pg-in .row{animation:up .5s var(--e) both}.pg-in .row:nth-child(2){animation-delay:.18s}.pg-in .row:nth-child(3){animation-delay:.23s}.pg-in .row:nth-child(4){animation-delay:.28s}.pg-in .row:nth-child(5){animation-delay:.33s}.pg-in .row:nth-child(n+6){animation-delay:.38s}
+.ico.l{animation:flt 3s ease-in-out infinite}.glow{animation:glow 2.4s ease-in-out infinite}
+.bar i{background:linear-gradient(90deg,var(--ac),#e8957a,var(--ac));background-size:200% 100%;animation:shm 2s linear infinite}
+.win{border:1px solid var(--ln);border-radius:16px;overflow:hidden;background:var(--card)}
+.wb{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--soft);border-bottom:1px solid var(--ln)}
+.wb span{width:10px;height:10px;border-radius:50%;flex:none}.wb span:nth-child(1){background:#e0665a}.wb span:nth-child(2){background:#e0b04a}.wb span:nth-child(3){background:#6fb264}
+.cr{margin-left:8px;font-size:13px;color:var(--mt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wbody{padding:12px}.fl{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px;max-height:44vh;overflow:auto}
+.fi{display:flex;align-items:center;gap:8px;border:1px solid transparent;background:none;border-radius:12px;padding:10px;font:14px inherit;font-family:inherit;text-align:left;cursor:pointer;transition:background .2s,transform .2s}
+.fi:hover{background:var(--soft)}.fi:active{transform:scale(.95)}.fi svg{color:var(--mt);flex:none}.fi.d svg{color:var(--ac)}.fi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl{stroke-dasharray:260;animation:dr .5s var(--e) both}.pulse rect{transform-box:fill-box;transform-origin:center;animation:pls .6s ease-in-out infinite alternate}
+.shake{animation:shk .4s}.cf{position:fixed;top:-14px;width:10px;height:14px;border-radius:2px;z-index:40;animation:cf 2s ease-in forwards}
+@keyframes flt{50%{transform:translateY(-5px)}}@keyframes glow{0%,100%{box-shadow:0 0 0 0 #c9644255}50%{box-shadow:0 0 0 10px #c9644200}}
+@keyframes shm{to{background-position:-200% 0}}@keyframes dr{from{stroke-dashoffset:260}to{stroke-dashoffset:0}}@keyframes pls{to{transform:scale(1.25)}}
+@keyframes shk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}@keyframes cf{to{transform:translate(var(--dx),105vh) rotate(var(--r))}}
+.stars{display:flex;align-items:center;gap:2px;margin:4px 0}.stars svg{animation:pop .5s var(--e) both}.stars svg:nth-child(2){animation-delay:.06s}.stars svg:nth-child(3){animation-delay:.12s}.stars svg:nth-child(4){animation-delay:.18s}.stars svg:nth-child(5){animation-delay:.24s}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.st3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.st3 div{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px;text-align:center;animation:pop .6s var(--e) both}.st3 b{display:block;font:500 19px Georgia,serif}.st3 small{color:var(--mt);font-size:12px}.tag{display:inline-block;background:var(--soft);border-radius:10px;padding:2px 10px;font-size:13px;color:var(--ac);font-weight:600}
+.tl{position:relative}.st{display:flex;gap:16px;position:relative;padding-bottom:20px}.st:last-child{padding-bottom:0}
+.st:not(:last-child)::before{content:"";position:absolute;left:19px;top:44px;bottom:4px;width:2px;background:var(--ln)}
+.dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:#fff;flex:none;position:relative;z-index:1}
+.st.lk .dot{background:var(--soft);color:var(--mt)}.st.lk{opacity:.6}.st.nx .dot{animation:glow 2.4s ease-in-out infinite}
+.sc{flex:1;min-width:0;border:1px solid var(--ln);border-radius:16px;padding:16px;background:var(--card)}
+.sh2{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px}.meta{font-size:13px;color:var(--mt);margin:8px 0 12px}
+textarea{width:100%;padding:12px 14px;border:1px solid var(--ln);border-radius:14px;font:14px inherit;font-family:inherit;background:var(--card);color:var(--tx);resize:vertical}textarea:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px #c9644222}
+.sw2{width:52px;height:30px;border-radius:15px;background:var(--ln);position:relative;border:0;cursor:pointer;transition:background .3s var(--e);flex:none}.sw2 i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .35s var(--e);box-shadow:0 1px 3px #0003}.sw2.on{background:var(--ok)}.sw2.on i{transform:translateX(22px)}
+#qr{display:grid;place-items:center;margin:16px 0}#qr img{display:none}
+.pips{display:flex;gap:4px;margin-top:8px}.pips i{width:24px;height:6px;border-radius:4px;background:var(--soft);transition:background .5s var(--e)}.pips i.on{background:var(--ac)}
+.gb svg{transition:transform .6s var(--e)}.gb:hover svg,.gb:active svg{transform:rotate(90deg)}
+.pz{display:grid;gap:12px;max-width:360px;margin:16px auto}.pz.g3{grid-template-columns:repeat(3,1fr)}.pz.g4{grid-template-columns:repeat(4,1fr)}.pz.g2{grid-template-columns:repeat(2,1fr)}
+.pc{aspect-ratio:1;border-radius:18px;border:1px solid var(--ln);background:var(--card);font:500 30px Georgia,serif;display:grid;place-items:center;cursor:pointer;transition:transform .25s var(--e),background .25s,filter .2s;color:var(--tx)}.pc:active{transform:scale(.94)}.pc.on{background:var(--soft);animation:pop .4s var(--e)}.pc.ok{background:#2f7d5b22;border-color:var(--ok);color:var(--ok)}.pc.lit{filter:brightness(1.6) saturate(1.3);transform:scale(1.06)}
+.opt.ok{border-color:var(--ok);background:#2f7d5b18;box-shadow:inset 0 0 0 1px var(--ok)}.opt.bad{border-color:#b3453a;background:#b3453a14;animation:shk .4s}
+@media(hover:hover){.btn:hover{transform:translateY(-1px)}.card:hover{transform:translateY(-2px)}}.card{transition:box-shadow .3s var(--e),transform .3s var(--e)}
+.thg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.thc{border:1px solid var(--ln);border-radius:16px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}.thc.on{border-color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
+.tp{display:flex;gap:6px;padding:8px;border-radius:12px;border:1px solid}.tp i{flex:1;height:36px;border-radius:8px}.legend{background-image:linear-gradient(110deg,transparent 30%,#ffffff66 50%,transparent 70%);background-size:200% 100%;animation:shn 2.5s linear infinite}@keyframes shn{to{background-position:-200% 0}}
+.chg{display:inline-block;animation:pop .5s var(--e)}
+#pix{position:fixed;left:12px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:25;transition:opacity .3s}body.dr #pix{opacity:0;pointer-events:none}
+.pxc{width:58px;height:58px;border-radius:20px;background:linear-gradient(160deg,var(--ac),var(--acd));box-shadow:0 6px 14px #0003,inset 0 -4px 0 #0002,inset 0 3px 0 #fff3;position:relative;cursor:pointer;animation:flt 3s ease-in-out infinite;border:0;padding:0;display:block}
+.pxc:active{animation:pop .3s var(--e)}
+.pxc i{position:absolute;top:19px;width:11px;height:13px;border-radius:50%;background:#2a1a14;animation:blk 4s infinite}.pxc i:nth-child(1){left:13px}.pxc i:nth-child(2){right:13px}
+.pxc i::after{content:"";position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;left:2px;top:2px}
+.pxc::before,.pxc::after{content:"";position:absolute;top:35px;width:9px;height:6px;border-radius:50%;background:#ff9bb0;opacity:.85}.pxc::before{left:5px}.pxc::after{right:5px}
+.pxc b{position:absolute;left:50%;top:36px;width:14px;height:6px;border:3px solid #2a1a14;border-top:0;border-radius:0 0 14px 14px;transform:translateX(-50%)}
+.pxc.talk b{height:9px;background:#8a3a3a;animation:tk2 .3s infinite alternate}
+@keyframes tk2{to{height:5px}}
+.pxb{position:absolute;left:0;bottom:66px;width:min(280px,calc(100vw - 32px));background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:18px;padding:14px 16px;box-shadow:0 10px 30px #0003;font-size:15px;animation:pop .35s var(--e);transform-origin:bottom left}
+.pxb::after{content:"";position:absolute;left:20px;bottom:-8px;width:14px;height:14px;background:var(--card);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);transform:rotate(45deg)}
+.pxb .foot{margin-top:12px}.pxb .btn{min-height:36px;font-size:14px;padding:0 14px}
+.hl{outline:3px solid var(--ac);outline-offset:4px;border-radius:14px;animation:glow 1.4s infinite}
+.pc{background:linear-gradient(160deg,var(--card),var(--soft));box-shadow:0 3px 0 var(--ln)}.pc:active{box-shadow:0 1px 0 var(--ln);transform:translateY(2px) scale(.97)}.pc.hint{border-color:var(--ac);animation:glow 1s infinite}
+body:has(.modal) #pix{opacity:0;pointer-events:none}body[data-mg="1"]:has(.modal) #pix{opacity:1;pointer-events:auto;bottom:calc(16px + env(safe-area-inset-bottom))}
+.fe{position:fixed;bottom:90px;font-size:38px;z-index:40;animation:fe 2.2s ease-out forwards;pointer-events:none}@keyframes fe{to{transform:translateY(-60vh) scale(1.4);opacity:0}}@keyframes ln{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.tabs{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:14px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{flex:1;white-space:nowrap;border:0;background:none;padding:10px 6px;border-radius:10px;font:500 14px inherit;font-family:inherit;color:var(--mt);cursor:pointer;transition:background .25s,color .25s,box-shadow .25s}.tabs button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 3px #0002}
+.wf{position:sticky;bottom:-24px;background:var(--bg);padding:12px 0 0;margin-top:16px;border-top:1px solid var(--ln);z-index:2}.tabs.wt button{padding:10px 2px;font-size:13px}
+@media(min-width:880px){.pg{max-width:1000px;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.pg>.hero,.pg>.thg,.pg>.st3{grid-column:1/-1}}
+@keyframes blk{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}@keyframes tk{to{height:3px}}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}@keyframes fadeo{to{opacity:0}}
+@keyframes sheet{from{transform:translateY(100%)}to{transform:none}}@keyframes sheeto{to{transform:translateY(60%)}}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes slin{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,20px)}12%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style></head><body>
+<div id="drawer"></div>
+<div id="shell">
+ <header><button class="rb" id="mb" aria-label="Меню"></button><div class="ht"><b id="sn"></b><small id="yr"></small></div><button class="chip" id="spd" aria-label="Скорость"></button><div class="chip" id="mn"></div></header>
+ <div class="xb"><i id="xp"></i></div>
+ <main id="main"></main>
+ <nav><div class="bi" id="bar"></div></nav>
+ <div id="sc"></div>
+</div>
+<div id="modal"></div>
+<div id="pix"></div>
+<script>
+const SRC="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+const I={menu:'<path d="M4 7h16M4 12h10M4 17h16"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.2.7 3.5 2.6 3.5 5.5"/>',games:'<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',plus:'<path d="M12 5v14M5 12h14"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',cart:'<path d="M4 7h16l-1.5 10h-13zM9 7a3 3 0 0 1 6 0"/>',folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',file:'<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'};
+const EM=["🎮","🚀","🐉","👾","🤖","🦖","⚽","🏰","🔥","💎","🌈","🐱","🐶","🦄","🍕","👽","🏆","⚔️","🚗","✈️","🌋","🎃","🧙","🦸"];
+const svg=(n,s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+const G=[["Экшен",1,1],["Гонки",1,1],["Головоломка",2,1.1],["Платформер",3,1.2],["Симулятор",4,1.2],["Хоррор",5,1.4],["Стратегия",7,1.5],["Ролевая игра",9,1.7],["Выживание",11,1.8],["Песочница",14,2.1],["Королевская битва",18,2.5],["Открытый мир",22,3]];
+const ST=[["prog","Программист",300,1],["qa","Тестировщик",150,2],["art","Художник",250,3],["snd","Звукорежиссёр",200,5],["des","Геймдизайнер",350,7],["mkt","Маркетолог",400,10]];
+const PC=[["Старый ноутбук",0,"2007"],["Офисный компьютер",800,"2009"],["Игровой компьютер",3000,"2012"],["Мощная станция",12000,"2016"],["Топовая видеокарта",50000,"2020"],["Кластер для ИИ",200000,"2024"]];
+const IC=["★","♦","♠","♥","●","▲","■","✦","☀","☾","⚑","♞","☠","⚡","✿","♛"];
+const CL=["#c96442","#d89a3c","#6a9a4f","#3f8f86","#4a78b5","#7a62b3","#b3567e","#5c5b57"];
+const EV={2007:"Выходит iPhone",2008:"Открылся App Store",2009:"Появляется альфа Minecraft",2010:"Эра мобильных игр",2011:"Minecraft 1.0",2012:"Инди-игры на Kickstarter",2013:"Выходят PS4 и Xbox One",2014:"Roblox набирает обороты",2015:"Рост стриминга",2016:"VR и Pokémon GO",2017:"Королевские битвы",2018:"Roblox — миллионы игроков",2019:"Облачный гейминг",2020:"Все играют дома",2021:"Метавселенные",2022:"Инди-хиты",2023:"ИИ в разработке игр",2024:"Фотореализм",2025:"Новое поколение консолей",2026:"Самые крутые игры в истории"};
+const NM=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const TABS=[["Студия","home"],["Команда","users"],["Игры","games"],["События","cal"],["Профиль","user"]],BAR=[0,1,2,4];
+const TUT=[["cal","Добро пожаловать","Ты открываешь игровую студию в 2007 году. Время идёт само, и вместе с ним растёт вся индустрия."],["plus","Создавай игры","Нажми «Создать игру»: выбери жанр, название, иконку и расположение экрана. Новые жанры открываются с уровнем."],["users","Собирай команду","Нанимай программистов, художников и других специалистов. Покупай мощные компьютеры, чтобы игры делались быстрее."],["games","Зарабатывай","Игры приносят деньги каждый месяц. Читай отзывы со звёздами: они подскажут, кого нанять. Если игра нравится сообществу, оно попросит обновление."],["file","Выпусти игру","Когда игра готова, пройди мини-игру. На телефоне подключи провода, на компьютере найди файл игры среди множества папок."],["cal","Мероприятия","Во вкладке «События» в меню этапы открываются с уровнем: подарок, мини-событие, конкурс, ивент, турнир, коллаборации и комик-кон. Каждое растит ажиотаж вокруг игры."],["games","Платформа плейсов","Игра с пятью звёздами превращается в платформу за 50 000 $. Внутри ты создаёшь плейсы, как в Roblox, а игроки добавляют свои."],["menu","Меню и вкладки","Кнопка слева сверху открывает меню. Внизу переключаются главные вкладки. Обучение всегда есть в меню."]];
+const $=i=>document.getElementById(i);
+const def=()=>({money:500,xp:0,lvl:1,y:2007,m:0,sn:"Моя студия",col:0,pc:0,st:{prog:1,art:0,des:0,snd:0,qa:0,mkt:0},games:[],dev:null,tab:0,spd:1,seen:0,log:[],msgs:[],ev:[],res:[],df:"m",codes:[],cr:{c:[],n:null,w:0,l:0},au:{on:0,g:[],y:0},pr:[],rb:0,sc:0,sk:[0],th:0,shop:null,fav:[],ea:0,bk:null,spu:[],mq:[],rq:[],qh:[],gc:[],tt:[],px:0,td:[],rr:[],ib:[],of:0,nx:null,vz:0,co:null,fc:0,cn:0,hist:[],jr:[],tot:0,tg:[],gl:null,lgs:0,av:null,ai:0});
+let S;try{S=JSON.parse(localStorage.getItem("gds3"))}catch(e){}
+if(!S)S=def();
+let W=null,MG=null,lastP=0,lastM=-1,tk=0;
+const save=()=>{if(CO.role=="g"&&CO.ok)return;S.log=(S.log||[]).slice(0,3);try{localStorage.setItem("gds3",JSON.stringify(S))}catch(e){}};
+function toast(t){if(!/Не хватает|Введи|Вставь|Сначала|Минимальная|нельзя|Лимит|не подошёл|скопируй|Это не|Нет доступа|Камера|Выбери|Код /.test(t))jr(t);const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+const need=()=>100*S.lvl,pow=k=>S.st[k]||0,speed=()=>vzM()*(1+tb("s")+.1*(S.of||0))*(5+ef("prog")*5+ef("art")*3+ef("des")*3+ef("snd")*2+ef("ux")*2+ef("cm")*2+pow("sup")+ef("comp")*3+ef("ai")*8);
+const price=(k,c)=>Math.round(c*(1+pow(k)*.6)),money=n=>Math.round(n).toLocaleString("ru-RU")+" $";
+function addXp(n){S.xp+=n;const a=S.lvl+1;let u=0;while(S.xp>=need()){S.xp-=need();S.lvl++;u=1}if(u){S.up=S.up?[S.up[0],S.lvl]:[a,S.lvl];setTimeout(showUp,700)}}
+const ico=(g,c)=>`<div class="ico ${c||""}" style="background:${g.img?`url(${g.img}) center/cover`:CL[g.c]}">${g.img?"":g.em||IC[g.ic]}</div>`;
+function tick(){
+ S.m++;if(S.m>11){S.m=0;S.y++;auBill();glbYear()}
+ let inc=0;S.games.forEach(g=>{inc+=Math.round(g.inc*evMul(g)*lgM(g)*(1+(g.h||0)/100)*(S.cr.c.some(c=>c.gid==g.id&&!c.d)?.8:1)*(!g.ap&&g.g==TG()?1.3:1)*(S.fav.includes(g.id)?1.5:1));g.inc*=.95});{const gn=Math.round(inc*df().i*(1+tb("i"))*(1+.1*(S.rb||0))*vzM()*(S.cr.brand?1.05:1)*(S.gl?1+S.gl.mul:1));S.money+=gn;S.tot=(S.tot||0)+Math.max(0,gn);S.hist=S.hist||[];S.hist.push(Math.round(S.money));if(S.hist.length>96)S.hist.shift();S.ea=(S.ea||0)+Math.max(0,gn);while(S.ea>=1e5){S.ea-=1e5;S.sc=(S.sc||0)+1}}
+ S.games.forEach(g=>{g.cd=(g.cd||0)+1;g.h=(g.h||0)*.9;if(Math.random()<.1)g.rv=genRev(g,1).concat(g.rv||[]).slice(0,12);if(g.sc>=6&&g.cd>=6&&!S.msgs.some(m=>m.gid==g.id)&&Math.random()<(g.sc-5.5)*.05){S.msgs.unshift({gid:g.id,y:S.y,m:S.m});toast("Сообщество просит обновление «"+g.n+"»")}});
+ S.games.forEach(g=>{if(g.pl)plTick(g)});crTick();auTick();bkTick();glbTick();decTick();S.pr=S.pr.filter(p=>--p.left>0);
+ S.ev=S.ev.filter(e=>{if(--e.left>0)return true;evEnd(e);return false});
+ S.money-=df().s*ST.reduce((a,s)=>a+(pow(s[0])-(s[0]=="prog"?1:0))*Math.round(s[2]/40),0);if(S.money<0)S.money=0;
+ 
+ save();draw()}
+function release(b){if(S.dev.upd)return relUpd(b);
+ const d=S.dev,g=GN(d),ob=(d.o=="b"||d.o==(S.y>=2010?"v":"h"))?.4:0;
+ const q=3+ef("des")*.7+ef("art")*.6+ef("snd")*.4+ef("qa")*.8+ef("ux")*.4+ef("comp")*.4+ef("ai")*.8+tb("q")+S.pc*.5+(S.y-2007)*.15+ob+(b||0)+ideaB()+devQ(d)+Math.random()*3;
+ const sc=Math.max(1,Math.min(10,+(q/1.4).toFixed(1)));
+ const gm={ap:d.ap||0,n:d.n,ic:d.ic,c:d.c,em:d.em,img:d.img,g:d.g,o:d.o,sc,y:S.y,inc:sc*sc*8*g[2]*(1+ef("mkt")*.5)*(1+(S.y-2007)*.25)};
+ gm.h=25;gm.id=Date.now();devInc(gm,d);gm.v=1;gm.cd=0;gm.a=snap();gm.rv=genRev(gm,4);S.games.unshift(gm);S.dev=null;lastP=0;S.money+=Math.round(sc*30*g[2]);addXp(Math.round(sc*25*g[2]));
+ S.log.unshift("Вышла игра «"+gm.n+"», оценка "+sc+" из 10");toast("Игра «"+gm.n+"» вышла. Оценка: "+sc)}
+/* меню */
+function menu(o){document.body.classList.toggle("dr",o);if(o)drawer()}
+function drawer(){
+ $("drawer").innerHTML=`<div class="logo">${S.sn}${S.title?`<div class="tag" style="font:600 13px system-ui,sans-serif;margin-top:8px">${S.title}</div>`:""}</div>
+ ${[0,1,2,3,16,4].map(i=>`<button class="dn ${S.tab==i?"on":""}" onclick="go(${i})">${svg(TABS[i][1])}${TABS[i][0]}</button>`).join("")}
+ <button class="dn" onclick="menu(false);setTimeout(()=>pixTour('start'),300)">${svg("help")}Обучение</button>
+ ${S.adm?`<button class="dn" onclick="menu(false);setTimeout(()=>admin(true),300)">${svg("shield")}Админ</button>`:""}
+ <div class="dh">Недавние игры</div>
+ ${S.games.slice(0,3).map(g=>`<button class="dn" onclick="go(2)">${ico(g,"m")}${g.n}</button>`).join("")||`<div class="dim" style="padding:0 12px">Пока нет игр</div>`}
+ <button class="dn" style="color:var(--mt)" onclick="menu(false);setTimeout(()=>allPts(true),300)"><span style="flex:1">Все пункты</span>${svg("chev",18)}</button>
+ <div class="dfoot"><div class="avt" ${S.av?`style="background:url(${S.av}) center/cover;color:transparent"`:""}>${S.av?"":S.sn[0].toUpperCase()}</div><button class="pill" onclick="menu(false);setTimeout(openW,350)">${svg("plus",20)}Создать игру</button></div>
+ <button class="dn" style="margin-top:8px" onclick="menu(false);setTimeout(()=>settings(true),300)">${svg("gear")}Настройки</button>`}
+function go(i){S.tab=i;menu(false);draw(true);$("main").scrollTop=0;pixTab(i);coRaw({tb:i})}
+/* создание игры */
+function openW(){W={n:"",g:0,ic:0,c:0,o:"v",em:null,img:null,sz:1,th:0,au:1,mn:0,ft:[],lg0:0};wizard(true)}
+const WTABS=["Основное","Платформа","Стиль","Функции","Иконка"];
+const wzO=(a,cur,key,sub,cols)=>`<div class="opts" style="grid-template-columns:repeat(${cols||2},minmax(0,1fr))">${a.map((x,i)=>`<button class="opt ${cur==i?"on":""}" onclick="W.${key}=${i};wizard()">${x[0]}${sub?`<small>${sub(x,i)}</small>`:""}</button>`).join("")}</div>`;
+function wizard(f){const t=W.tab||0,fc=1+S.lvl*.3,sz=W.sz??1,au=W.au??1,mn=W.mn??0,ft=W.ft||[],L=FT();let h="";
+ if(t==0)h=`<label>Название</label><input type="text" maxlength="24" placeholder="${W.ap?"Например, Мой браузер":"Например, Звёздный гонщик"}" value="${W.n.replace(/"/g,"&quot;")}" oninput="W.n=this.value"><label>${W.ap?"Тип приложения":"Жанр"}</label><div class="opts">${(W.ap?avis():gvis()).map(i=>{const g=(W.ap?APPT:G)[i],lk=S.lvl<g[1]||S.y<(g[3]||0);return `<button class="opt ${W.g==i?"on":""}" ${lk?"disabled":`onclick="W.g=${i};wizard()"`}>${g[0]}<small>${lk?(S.lvl<g[1]?"с "+g[1]+" уровня":"с "+g[3]+" года"):"доступен"}</small></button>`}).join("")}</div>`;
+ if(t==1)h=`<label>Платформа</label><div class="opts" style="grid-template-columns:1fr">${[["v","Телефон","Вертикальный экран"],["h","Компьютер","Горизонтальный экран"],["b","Обе платформы","+"+money(DUAL())+", доход ×1,6"]].map(x=>`<button class="opt ${W.o==x[0]?"on":""}" onclick="W.o='${x[0]}';wizard()">${x[1]}<small>${x[2]}</small></button>`).join("")}</div><label>Масштаб проекта</label>${wzO(SZ,sz,"sz",x=>x[2]?"+"+money(x[2]*fc):"без доплаты",3)}<p class="dim" style="margin:8px 0 0">${SZ[sz][1]}</p><label>Язык</label><div class="opts"><button class="opt ${W.lg0?"":"on"}" onclick="W.lg0=0;wizard()">Только русский<small>бесплатно</small></button><button class="opt ${W.lg0?"on":""}" onclick="W.lg0=1;wizard()">Ещё английский<small>+${money(LNG[0][1]*fc)}</small></button></div>`;
+ if(t==2)h=`${W.ap?"":`<label>Тема</label><div class="opts">${THS.map((x,i)=>`<button class="opt ${(W.th??0)==i?"on":""}" onclick="W.th=${i};wizard()">${x}<small>${(W.g*7+i*3)%5==0?"Удачное сочетание":"обычное"}</small></button>`).join("")}</div>`}<label>Аудитория</label>${wzO(AUD,au,"au",null,3)}<p class="dim" style="margin:8px 0 0">${AUD[au][1]}</p><label>Монетизация</label>${wzO(MON,mn,"mn",null,3)}<p class="dim" style="margin:8px 0 0">${MON[mn][1]}</p>`;
+ if(t==3)h=`<label>Функции проекта</label><div class="opts">${L.map((x,i)=>x[3]>S.lvl?`<button class="opt" disabled>${x[0]}<small>с ${x[3]} уровня</small></button>`:`<button class="opt ${ft.includes(i)?"on":""}" onclick="wzFt(${i})">${x[0]}<small>+${money(x[1]*fc)}</small></button>`).join("")}</div><p class="dim" style="margin:8px 0 0">Каждая функция повышает качество и стоит денег.</p>`;
+ if(t==4)h=`<label>Иконка</label>${icPick()}`;
+ $("modal").innerHTML=`<div class="modal ${f?"in":""}" onclick="if(event.target==this)closeM()"><div class="sheet"><div class="sh"><h2>${W.ap?"Новое приложение":"Новая игра"}</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><div class="tabs wt" style="margin:16px 0 0">${WTABS.map((n,i)=>`<button class="${t==i?"on":""}" onclick="W.tab=${i};wizard()">${n}</button>`).join("")}</div>${h}<div class="foot wf"><button class="btn o" onclick="closeM()">Отмена</button><button class="btn" onclick="start()" ${S.dev||S.money<wzCost()?"disabled":""}>${S.dev?"Идёт другая разработка":"Начать · "+money(wzCost())}</button></div></div></div>`}
+
+function closeM(){CTK=null;document.body.dataset.mg=0;if(MG){clearInterval(MG.iv);if(MG.st)MG.st.getTracks().forEach(t=>t.stop());MG=null}const m=document.querySelector(".modal");if(!m)return;m.classList.remove("in");m.classList.add("out");W=null;setTimeout(()=>{if(document.querySelector(".modal.out"))$("modal").innerHTML=""},250)}
+function start(){if(S.dev)return;const wc=wzCost();if(S.money<wc)return toast("Не хватает денег");S.money-=wc;S.dev={sz:W.sz??1,th:W.th??0,au:W.au??1,mn:W.mn??0,ft:(W.ft||[]).slice(),lg0:W.lg0?1:0,n:W.n.trim()||(W.ap?APPT:G)[W.g][0]+" "+(S.games.length+1),g:W.g,ap:W.ap||0,ic:W.ic,c:W.c,em:W.em,img:W.img,o:W.o,p:0};lastP=0;closeM();S.tab=0;toast("Разработка началась");draw(true)}
+/* обучение */
+function tut(i){
+ const t=TUT[i],l=i==TUT.length-1;
+ $("modal").innerHTML=`<div class="modal ${$("modal").firstChild?"":"in"}"><div class="sheet tut"><div class="sl" key="${i}"><div class="big">${svg(t[0],44)}</div><h2>${t[1]}</h2><p>${t[2]}</p></div>
+ <div class="dots">${TUT.map((_,k)=>`<i class="${k==i?"on":""}"></i>`).join("")}</div>
+ <div class="foot">${i?`<button class="btn o" onclick="tut(${i-1})">Назад</button>`:`<button class="btn o" onclick="endT()">Пропустить</button>`}<button class="btn" onclick="${l?"endT()":`tut(${i+1})`}">${l?"Начать":"Далее"}</button></div></div></div>`}
+function endT(){S.seen=1;save();closeM()}
+const WC=["#d64545","#d89a3c","#2f7d5b","#4a78b5"],shuf=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]),pk=a=>a[Math.random()*a.length|0],esc=t=>t.replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
+const RF=["Загрузки","Документы","Системные файлы","Рабочий стол","Программы","Windows","Видео","Музыка","Изображения","Temp"],SF=["Кэш","Драйверы","Обновления","Резерв","Логи","Старое","Проекты","Установщики","Библиотеки","Сборки"],FL=["setup.exe","readme.txt","driver.sys","log_2008.log","backup.zip","photo.jpg","notes.docx","config.ini","update.msi","cache.dat","video.avi","song.mp3"];
+function mgShell(h,f){document.body.dataset.mg=MG?1:0;$("modal").innerHTML=`<div class="modal ${f?"in":""}"><div class="sheet" style="max-width:640px">${h}</div></div>`}
+function publish(){const d=S.dev;if(!d||!d.ready)return;(S.rb||0)>=1?wireGame():d.o=="b"?(Math.random()<.5?phoneGame():pk([pcGame,timeGame,mathGame])()):d.o=="h"?pk([pcGame,timeGame,mathGame])():phoneGame()}
+function upl(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas");c.width=c.height=96;const m=Math.min(im.width,im.height);c.getContext("2d").drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,96,96);W.img=c.toDataURL("image/jpeg",.85);W.em=null;rd()};im.src=r.result};r.readAsDataURL(f)}
+function conf(){for(let i=0;i<40;i++){const d=document.createElement("i");d.className="cf";d.style.cssText=`left:${Math.random()*100}vw;background:${CL[i%8]};--r:${Math.random()*720-360}deg;--dx:${Math.random()*160-80}px;animation-delay:${Math.random()*.4}s`;document.body.appendChild(d);setTimeout(()=>d.remove(),2800)}}
+function mgWin(b){if(MG)clearInterval(MG.iv);conf();const c=CTK;mgShell(`<div class="tut"><div class="big" style="background:var(--ok)">${svg("check",48)}</div><h2>${c?"Задание выполнено":"Игра готова"}</h2><p>${c?"Награда: "+(c.r+(b?1:0))+" Син коинов":(S.dev.upd?"Выпускаем обновление":"Выпускаем")+" «"+esc(S.dev.n)+"» в продажу."}</p></div>`);setTimeout(()=>{closeM();if(c){S.td[c.i]=Date.now()+c.c*6e4;S.sc=(S.sc||0)+c.r+(b?1:0);toast("Получено Син коинов: "+(c.r+(b?1:0)))}else release(b);draw(true)},1500)}
+/* провода */
+function wireGame(){MG={k:"w",sel:null,done:[],ord:shuf([0,1,2,3]),err:0,last:-1};wireDraw(true)}
+function wireDraw(f){
+ const Y=i=>44+i*58;let v=`<svg viewBox="0 0 320 260" class="${MG.shk?"shake":""}" style="width:100%;max-width:420px;display:block;margin:0 auto"><rect width="320" height="260" rx="20" style="fill:var(--soft)"/>`;MG.shk=0;
+ MG.done.forEach(c=>{v+=`<line class="${c==MG.last?"wl":""}" x1="40" y1="${Y(c)}" x2="280" y2="${Y(MG.ord.indexOf(c))}" stroke="${WC[c]}" stroke-width="8" stroke-linecap="round"/>`});
+ for(let i=0;i<4;i++){v+=`<g class="${MG.sel===i?"pulse":""}" onclick="wirePick('l',${i})" style="cursor:pointer"><rect x="12" y="${Y(i)-15}" width="30" height="30" rx="8" fill="${WC[i]}"/></g><g onclick="wirePick('r',${i})" style="cursor:pointer"><rect x="278" y="${Y(i)-15}" width="30" height="30" rx="8" fill="${WC[MG.ord[i]]}"/></g>`}
+ mgShell(`<div class="sh"><h2>Подключи провода</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0 16px">Нажми на провод слева, затем на такой же цвет справа. Ошибок: ${MG.err}</p>${v}</svg>`,f)}
+function wirePick(a,i){
+ if(MG.done.length==4)return;
+ if(a=="l"){if(!MG.done.includes(i))MG.sel=i}
+ else if(MG.sel!==null){if(MG.ord[i]==MG.sel){MG.done.push(MG.sel);MG.last=MG.sel}else{MG.err++;MG.shk=1}MG.sel=null}
+ wireDraw();if(MG.done.length==4)setTimeout(()=>mgWin(MG&&MG.err?0:.5),900)}
+/* компьютер */
+function genFS(nm){
+ const R=shuf(RF).slice(0,8).map(n=>({n,t:"d",c:shuf(SF).slice(0,4).map(x=>({n:x,t:"d",c:shuf(FL).slice(0,4).map(f=>({n:f,t:"f"}))}))}));
+ const tf=pk(R),ts=pk(tf.c);ts.c.splice(Math.random()*4|0,0,{n:nm+".exe",t:"f",ok:1});
+ for(let k=0;k<4;k++)pk(pk(R).c).c.unshift({n:pk([nm+" (копия).exe",nm+"_old.tmp",nm+".txt",nm+"_setup.exe"]),t:"f"});
+ return{n:"Этот компьютер",t:"d",c:R,hint:[tf.n,ts.n]}}
+function pcGame(){const nm=esc(S.dev.n);MG={k:"p",nm,fs:genFS(nm),path:[],t0:Date.now(),iv:setInterval(()=>{const e=$("mt");if(e)e.textContent=Math.floor((Date.now()-MG.t0)/1000)+" с"},500)};pcDraw(true,true)}
+const pcCur=()=>MG.path.length?MG.path[MG.path.length-1]:MG.fs;
+function pcDraw(f,an){
+ const c=pcCur(),cr=[MG.fs.n,...MG.path.map(x=>x.n)].join(" › ");
+ mgShell(`<div class="sh"><h2>Найди свою игру</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <p class="dim" style="margin:8px 0 16px">Файл <b>${MG.nm}.exe</b> спрятан среди системных папок. Остерегайся копий. Время: <span id="mt">${Math.floor((Date.now()-MG.t0)/1000)} с</span></p>
+ <div class="win"><div class="wb"><span></span><span></span><span></span><div class="cr">${cr}</div></div><div class="wbody"><button class="btn o s" onclick="pcBack()" ${MG.path.length?"":"disabled"}>Назад</button>
+ <div class="fl ${an?"pg-in":""}">${c.c.map((x,i)=>`<button class="fi ${x.t}" onclick="pcOpen(${i})" style="${an?`animation:slin .4s var(--e) ${i*.03}s both`:""}">${svg(x.t=="d"?"folder":"file",24)}<span>${x.n}</span></button>`).join("")}</div></div></div>`,f)}
+function pcOpen(i){const x=pcCur().c[i];
+ if(x.t=="d"){MG.path.push(x);pcDraw(false,true)}
+ else if(x.ok)mgWin(Math.max(0,(45-(Date.now()-MG.t0)/1000)/90));
+ else{const e=document.querySelectorAll(".fi")[i];e.classList.remove("shake");void e.offsetWidth;e.classList.add("shake");toast("Это не тот файл")}}
+function pcBack(){MG.path.pop();pcDraw(false,true)}
+const snap=()=>({art:pow("art"),snd:pow("snd"),qa:pow("qa"),des:pow("des")});
+const stars=r=>[1,2,3,4,5].map(i=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="${i<=Math.round(r)?"#d89a3c":"none"}" stroke="${i<=Math.round(r)?"#d89a3c":"#c9c7bc"}" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"/></svg>`).join("");
+const UN=["Алекс","Маша","Дима","Катя","Игорь","Лена","Макс","Оля","Тимур","Соня"];
+const PR={gfx:["Красивая графика, глаз не оторвать","Визуал просто огонь"],snd:["Отличная музыка и звуки","Саундтрек запомнился"],qa:["Ни одного бага, всё работает гладко","Играется без вылетов"],des:["Очень увлекательный геймплей","Механики продуманы до мелочей"]};
+const NG={gfx:["Графика слабая. Нужен художник","Картинка выглядит бедно. Нужен художник"],snd:["Почти нет звука. Нужен звукорежиссёр","Музыки нет вообще. Нужен звукорежиссёр"],qa:["Много багов, игра вылетает. Нужен тестировщик","Постоянные ошибки. Нужен тестировщик"],des:["Скучный геймплей. Нужен геймдизайнер","Не хватает идей. Нужен геймдизайнер"]};
+function genRev(g,n){/*текст отзывов в rvText*/const a=g.a||snap(),ks=[["gfx","art"],["snd","snd"],["qa","qa"],["des","des"]],o=[];
+ for(let i=0;i<n;i++){const k=pk(ks),good=(a[k[1]]||0)>=1||g.sc>=8;o.push({u:pk(UN),s:Math.max(1,Math.min(5,Math.round(g.sc/2+(good?.5:-1)+Math.random()-.5))),t:rvText(good,k[0])+(good&&g.sc>=7&&Math.random()<.4?" Ждём обновление!":"")})}
+ return o}
+function showRv(id){const g=S.games.find(x=>x.id==id);if(!g)return;
+ mgShell(`<div class="sh"><h2>Отзывы</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <div class="row f">${ico(g,"l")}<div class="t"><b>${esc(g.n)}</b><div class="stars">${stars(g.sc/2)}</div><small>Оценка ${g.sc} из 10 · версия ${g.v||1}</small></div></div>
+ ${(g.rv||[]).map((r,i)=>`<div class="row" style="animation:up .5s var(--e) ${i*.06}s both"><div class="av">${r.u[0]}</div><div class="t"><b>${r.u}</b><div class="stars">${stars(r.s)}</div>${r.t}</div></div>`).join("")}
+ <div class="foot"><button class="btn o" onclick="closeM()">Закрыть</button><button class="btn" ${S.dev?"disabled":""} onclick="closeM();startUpd(${g.id})">Обновить игру</button></div>`,true)}
+function startUpd(id){const g=S.games.find(x=>x.id==id);if(!g)return;if(S.dev)return toast("Сначала закончи текущий проект");W={id,ic:g.ic,c:g.c,em:g.em,img:g.img};updWiz(true)}
+function relUpd(b){const d=S.dev,g=S.games.find(x=>x.id==d.upd);S.dev=null;lastP=0;S.msgs=S.msgs.filter(m=>m.gid!=d.upd);if(!g)return;g.ic=d.ic;g.c=d.c;g.em=d.em;g.img=d.img;if(d.port)g.port=1;
+ const q=3+ef("des")*.7+ef("art")*.6+ef("snd")*.4+ef("qa")*.8+ef("ux")*.4+ef("comp")*.4+ef("ai")*.8+tb("q")+S.pc*.5+(S.y-2007)*.15+(b||0)+Math.random()*3;
+ g.sc=Math.max(1,Math.min(10,+((q/1.4+g.sc)/2+.4).toFixed(1)));g.v=(g.v||1)+1;g.cd=0;g.h=Math.min(100,(g.h||0)+30);g.a=snap();
+ g.inc=g.sc*g.sc*8*GN(g)[2]*(1+ef("mkt")*.5)*(1+(S.y-2007)*.25)*(g.port?1.6:1)*(g.mx||1);g.rv=(d.port?[{u:pk(UN),s:5,t:"Наконец-то игра вышла и на телефоне"}]:[]).concat(genRev(g,3),g.rv||[]).slice(0,12);
+ S.money+=Math.round(g.sc*20);addXp(Math.round(g.sc*15));toast("Обновление «"+g.n+"» вышло. Оценка: "+g.sc)}
+/* контент */
+G.push(["Файтинг",6,1.4],["Ритм-игра",8,1.5],["Башенная защита",10,1.7],["Космосим",13,2],["Визуальная новелла",15,1.9],["Рогалик",17,2.2],["Онлайн-RPG",26,3.4],["VR-игра",30,3.8],["Метавселенная",35,4.5]);
+ST.push(["sup","Саппорт",200,4],["cm","Комьюнити-менеджер",350,8],["ux","Дизайнер интерфейсов",300,12],["comp","Композитор",450,15],["ai","ИИ-инженер",900,20]);ST.sort((x,y)=>x[3]-y[3]);
+PC.push(["Квантовый компьютер",800000,"2030"],["Компьютер будущего",3000000,"2035"]);
+IC.push("☘","⚙","❖","☂","♣","✪","☯","✧");
+EM.push("🎯","🎲","🧩","🛸","🐲","🦊","🐼","🍄","🌟","⚡","🎸","🏎️","🧨","🎪","🪐","🗡️");
+Object.assign(EV,{2027:"Игры на нейроинтерфейсах",2028:"Полное погружение в VR",2029:"ИИ-напарники в играх",2030:"Квантовые технологии",2031:"Голографические экраны",2032:"Игры без ограничений",2033:"Новая эра метавселенных",2034:"Игры на любом экране",2035:"Золотой век игр"});
+PR.gfx.push("Картинка как в кино","Глаза радуются");PR.snd.push("Звук погружает с головой","Музыка топ");PR.qa.push("Отполировано до блеска");PR.des.push("Невозможно оторваться","Каждый уровень удивляет");
+NG.gfx.push("Выглядит как из прошлого века");NG.snd.push("Звук режет слух");NG.qa.push("Вылетает каждые пять минут");NG.des.push("Однообразно, быстро надоедает");
+const CITY=["Москва","Токио","Лос-Анджелес","Берлин","Сеул","Париж","Лондон","Сан-Диего","Сингапур","Мюнхен"],TF=["Кубок","Чемпионат","Лига","Битва","Гран-при","Открытый турнир"],CT=["фан-арт","косплей","спидран","мемы","моды","видеомонтаж","история героя"],IE=["Хэллоуин","Новый год","Летний фестиваль","Весенний забег","День рождения игры","Чёрная пятница","Космический сезон","Пиратская неделя","Зимний фестиваль","Охота за сокровищами","Праздник урожая","Ночь призраков"],NICK=["ProGamer","Тень","Шторм","Кибер","Огонь","Фантом","Ястреб","Дракон"];
+const EVK={c:{n:"Комик-кон",cost:2000,min:8,lvl:6,len:3,mul:1,d:"Огромный фестиваль для фанатов."},t:{n:"Турнир",cost:1500,min:7,lvl:4,len:2,mul:.6,d:"Игроки борются за призовой фонд."},k:{n:"Конкурс",cost:500,min:6,lvl:2,len:2,mul:.4,d:"Игроки присылают свои работы."},i:{n:"Ивент в игре",cost:800,min:5,lvl:3,len:3,mul:.5,d:"Сезонный контент прямо в игре."}};
+const AC=[["Первая игра",()=>S.games.length>=1],["Пять игр",()=>S.games.length>=5],["Десять игр",()=>S.games.length>=10],["Хит: оценка 9 и выше",()=>S.games.some(g=>g.sc>=9)],["Идеал: 10 из 10",()=>S.games.some(g=>g.sc>=10)],["Первое обновление",()=>S.games.some(g=>g.v>1)],["Своя картинка на иконке",()=>S.games.some(g=>g.img)],["Первый комик-кон",()=>S.res.some(r=>r.k=="c")],["Первый турнир",()=>S.res.some(r=>r.k=="t")],["Первый конкурс",()=>S.res.some(r=>r.k=="k")],["Миллионер",()=>S.money>=1e6],["Уровень 10",()=>S.lvl>=10],["Уровень 25",()=>S.lvl>=25],["Дожил до 2015 года",()=>S.y>=2015],["Дожил до 2020 года",()=>S.y>=2020],["Дожил до 2030 года",()=>S.y>=2030],["Команда из 10 человек",()=>Object.values(S.st).reduce((a,b)=>a+b,0)>=10],["Топовый компьютер",()=>S.pc>=5]];
+const evMul=g=>1+S.ev.filter(e=>e.gid==g.id).reduce((a,e)=>a+EVK[e.k].mul,0)+S.pr.filter(p=>p.gid==g.id).reduce((a,p)=>a+p.mul,0);
+const rd=()=>W.pid?plWiz():W.gid?gsWiz():W.id?updWiz():wizard();
+function icPick(){return `<div class="row f" style="padding:0 0 16px">${ico(W,"l")}<div class="t dim">Так игра будет выглядеть в каталоге</div></div>
+ <div class="dim" style="margin-bottom:8px">Символ</div><div class="g8">${IC.map((e,i)=>`<button class="opt ${W.ic==i&&!W.em&&!W.img?"on":""}" onclick="W.ic=${i};W.em=null;W.img=null;rd()">${e}</button>`).join("")}</div>
+ <div class="dim" style="margin:16px 0 8px">Смайлик</div><div class="g8">${EM.map(e=>`<button class="opt ${W.em==e&&!W.img?"on":""}" onclick="W.em='${e}';W.img=null;rd()">${e}</button>`).join("")}</div>
+ <input type="text" maxlength="4" placeholder="Или вставь свой смайлик" style="margin-top:12px" oninput="W.em=this.value||null;W.img=null">
+ <div class="dim" style="margin:16px 0 8px">Своя картинка</div><div class="foot" style="margin-top:0"><label class="btn o" style="margin:0">Загрузить фото<input type="file" accept="image/*" hidden onchange="upl(this)"></label>${W.img?`<button class="btn o" onclick="W.img=null;rd()">Убрать</button>`:""}</div>
+ <div class="dim" style="margin:16px 0 8px">Цвет фона</div><div class="g8">${CL.map((c,i)=>`<button class="sw ${W.c==i?"on":""}" style="background:${c}" onclick="W.c=${i};rd()" aria-label="Цвет ${i+1}"></button>`).join("")}</div>`}
+function updWiz(f){const g=S.games.find(x=>x.id==W.id);
+ mgShell(`<div class="sh"><h2>Обновление</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0 16px">«${esc(g.n)}». Можно сменить иконку или оставить прежнюю.</p>${icPick()}<div class="foot"><button class="btn o" onclick="closeM()">Отмена</button><button class="btn" onclick="updGo()">Начать обновление</button></div>`,f)}
+function updGo(){const id=W.id,g=S.games.find(x=>x.id==id);if(S.dev)return toast("Сначала закончи текущий проект");S.dev={n:g.n,g:g.g,ap:g.ap||0,ic:W.ic,c:W.c,em:W.em,img:W.img,o:g.o,p:0,upd:id};lastP=0;closeM();S.tab=0;toast("Началась работа над обновлением");draw(true);$("main").scrollTop=0}
+function pickEv(k){const c=EVK[k],ok=S.games.filter(g=>g.sc>=c.min&&!S.ev.some(e=>e.gid==g.id));
+ mgShell(`<div class="sh"><h2>${c.n}</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0">${c.d} Длится месяцев: ${c.len}.</p>${ok.length?ok.map(g=>`<div class="row">${ico(g)}<div class="t"><b>${esc(g.n)}</b><div class="stars">${stars(g.sc/2)}</div></div><button class="btn s" ${S.money<c.cost?"disabled":""} onclick="evGo('${k}',${g.id})">${money(c.cost)}</button></div>`).join(""):`<p>Нет подходящих игр с оценкой от ${c.min}. Выпусти хит или обнови игру.</p>`}`,true)}
+const EN=(k,g)=>({g:()=>"Подарок: "+pk(GF),m:()=>"Мини-событие: "+pk(MN),k:()=>"Конкурс: "+pk(CT),i:()=>"Ивент: "+pk(IE),t:()=>pk(TF)+" «"+esc(g.n)+"»",c:()=>"Комик-кон: "+pk(CITY),b1:()=>"Коллаб: «"+pk(CB[0])+"»",b2:()=>"Коллаб: «"+pk(CB[1])+"»",b3:()=>"Коллаб: «"+pk(CB[2])+"»",f1:()=>"Фан-сходка: "+pk(FM[0]),f2:()=>"Фан-сходка: "+pk(FM[1]),f3:()=>"Фан-фестиваль: "+pk(FM[2])})[k]();
+function evGo(k,id){const c=EVK[k],g=S.games.find(x=>x.id==id);if(!g||S.money<c.cost)return;S.money-=c.cost;const n=EN(k,g);g.h=Math.min(100,(g.h||0)+c.hy);S.ev.push({k,gid:id,n,left:c.len,len:c.len});closeM();toast("Началось: "+n);draw(true)}
+function evEnd(e){const g=S.games.find(x=>x.id==e.gid);if(!g)return;const c=EVK[e.k],base=g.inc*c.mul,r=Math.round(base*c.len*2*(1+ef("cm")*.1)),v=Math.round(base*(40+Math.random()*30));
+ S.money+=r;g.h=Math.min(100,(g.h||0)+c.hy/2);addXp(Math.round(15*c.len+g.sc*3));
+ const t=e.k=="c"?`${e.n}: гостей ${v}, прибыль ${money(r)}`:e.k=="t"?`${e.n}: победил ${pk(NICK)}, прибыль ${money(r)}`:e.k=="k"?`${e.n}: прислали работ ${Math.round(v/10)}, прибыль ${money(r)}`:`${e.n}: игроки в восторге, прибыль ${money(r)}`;
+ S.res.unshift({k:e.k,t,y:S.y,m:S.m});S.res=S.res.slice(0,8);
+ g.rv=[{u:pk(UN),s:5,t:pk(["Круто, что провели мероприятие","Давно так не веселился","Спасибо за праздник"])}].concat(g.rv||[]).slice(0,12);
+ g.inc*=1.15;g.sc=Math.min(10,+(g.sc+.1).toFixed(1));toast(t);if(e.k=="c"||e.k=="b3")conf()}
+/* платформа плейсов */
+const PLC=50000;
+const PT=[["Обби",1],["Тайкун",1.2],["Симулятор",1.1],["Ролевая игра",1.2],["Выживание",1.3],["Хоррор",1.4],["Гонки",1.1],["Башенная защита",1.2],["Боевая арена",1.3],["Побег",1],["Кулинария",.9],["Магазин",.9],["Школа",.9],["Город",1.1],["Ферма",1],["Космос",1.3],["Подводный мир",1.1],["Дикий запад",1],["Зомби",1.3],["Паркур",1],["Дом с привидениями",1.2],["Показ мод",.9],["Футбол",1.2],["Рыбалка",.8]];
+const PX=["Супер","Мега","Тайный","Безумный","Космический","Пиксельный","Последний","Огромный","Лунный","Золотой"],PN=["Побег","Город","Остров","Замок","Лабиринт","Гараж","Лес","Бункер","Мир","Рай"];
+NICK.push("Вихрь","Комета","Рекс","Пиксель","Нинзя","Мастер","Волк","Блик");IE.push("День героев","Неделя скидок","Карнавал","Зимняя гонка","Битва боссов","Фестиваль света");CITY.push("Осака","Торонто","Рим","Дубай");CT.push("озвучка","песни","скины");TF.push("Суперкубок","Мировая лига","Арена чемпионов");
+AC.push(["Своя платформа",()=>S.games.some(g=>g.pl)],["Первый плейс",()=>S.games.some(g=>g.pl&&g.pl.p.some(p=>p.me&&!p.b))],["Пять своих плейсов",()=>S.games.some(g=>g.pl&&g.pl.p.filter(p=>p.me).length>=5)],["100 000 посещений",()=>S.games.some(g=>g.pl&&g.pl.p.reduce((a,p)=>a+p.v,0)>=1e5)],["Уровень 40",()=>S.lvl>=40],["Двадцать игр",()=>S.games.length>=20],["Дожил до 2035 года",()=>S.y>=2035]);
+const TR=()=>PT[(S.y*7+3)%PT.length];
+function plTick(g){const P=g.pl.p;P.forEach(p=>{if(p.b>0){if(--p.b==0)toast("Плейс «"+p.n+"» готов");return}const i=p.inc*PT[p.t][1]*(PT[p.t][0]==TR()[0]?1.5:1);S.money+=Math.round(p.me?i:i*.3);p.v+=Math.round(i*(15+Math.random()*10));p.inc*=.99});
+ if(Math.random()<.22){const q=+(3+Math.random()*6).toFixed(1);P.push({id:Date.now()+Math.random(),n:pk(PX)+" "+pk(PN),t:Math.random()*PT.length|0,ic:Math.random()*IC.length|0,c:Math.random()*8|0,q,by:pk(NICK),inc:q*q*3*(1+(S.y-2007)*.2),v:0,b:0})}
+ if(P.filter(p=>!p.me).length>16)P.splice(P.findIndex(p=>!p.me),1)}
+function plUp(id){const g=S.games.find(x=>x.id==id);if(!g||g.sc<9)return toast("Нужно пять звёзд");if(S.money<PLC)return toast("Не хватает денег");S.money-=PLC;g.pl={p:[]};conf();toast("«"+g.n+"» стала платформой плейсов");draw();platform(id)}
+const plRow=(p,i)=>`<div class="row" style="animation:up .5s var(--e) ${i*.05}s both">${ico(p)}<div class="t"><b>${esc(p.n)}</b><small>${PT[p.t][0]} · ${p.me?"Ваш плейс":"Автор: "+p.by}</small>${p.b>0?`<small>Строится, осталось месяцев: ${p.b}</small><div class="bar" style="margin-top:8px"><i style="width:${(2-p.b)*50}%"></i></div>`:`<div class="stars">${stars(p.q/2)}</div><small>Посещений: ${p.v.toLocaleString("ru-RU")}</small>`}</div>${p.me&&!p.b?`<b style="color:var(--ok)">+${money(p.inc*PT[p.t][1])}</b>`:""}</div>`;
+function platform(id){const g=S.games.find(x=>x.id==id);if(!g||!g.pl)return;const P=g.pl.p,my=P.filter(p=>p.me),cm=P.filter(p=>!p.me).sort((a,b)=>b.v-a.v).slice(0,6);
+ const vis=P.reduce((a,p)=>a+p.v,0),mi=my.reduce((a,p)=>a+(p.b?0:p.inc*PT[p.t][1]),0);
+ mgShell(`<div class="sh"><h2>Платформа</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <div class="row f">${ico(g,"l")}<div class="t"><b>${esc(g.n)}</b><div class="stars">${stars(g.sc/2)}</div><span class="tag">В тренде: ${TR()[0]}</span></div></div>
+ <div class="st3"><div><b>${my.length}</b><small>Ваших плейсов</small></div><div><b>${vis.toLocaleString("ru-RU")}</b><small>Посещений</small></div><div><b>${money(mi)}</b><small>В месяц</small></div></div>
+ <button class="btn glow" style="width:100%" onclick="plNew(${id})">${svg("plus",20)}Создать плейс</button>
+ <h3 style="margin:24px 0 4px">Ваши плейсы</h3>${my.length?my.map(plRow).join(""):`<p class="dim">Пока пусто. Создай первый плейс.</p>`}
+ <h3 style="margin:24px 0 4px">Плейсы игроков</h3>${cm.length?cm.map(plRow).join(""):`<p class="dim">Игроки скоро начнут создавать свои плейсы.</p>`}`,true)}
+function plNew(id){W={pid:id,n:"",t:0,ic:0,c:0,em:null,img:null};plWiz(true)}
+function plWiz(f){const g=S.games.find(x=>x.id==W.pid),cost=1000+100*g.pl.p.filter(p=>p.me).length;
+ mgShell(`<div class="sh"><h2>Новый плейс</h2><button class="rb" onclick="plBack()" aria-label="Назад">${svg("x")}</button></div>
+ <label>Название</label><input type="text" maxlength="24" placeholder="Например, Побег из тюрьмы" value="${esc(W.n)}" oninput="W.n=this.value">
+ <label>Тип плейса. В тренде: ${TR()[0]}</label><div class="opts">${PT.map((t,i)=>`<button class="opt ${W.t==i?"on":""}" onclick="W.t=${i};plWiz()">${t[0]}</button>`).join("")}</div>
+ <label>Иконка плейса</label>${icPick()}
+ <div class="foot"><button class="btn o" onclick="plBack()">Назад</button><button class="btn" ${S.money<cost?"disabled":""} onclick="plGo()">Создать за ${money(cost)}</button></div>`,f)}
+function plBack(){const id=W.pid;W=null;platform(id)}
+function plGo(){const g=S.games.find(x=>x.id==W.pid),n=g.pl.p.filter(p=>p.me).length,cost=1000+100*n;if(S.money<cost)return;
+ const q=Math.max(1,Math.min(10,+(2+ef("des")*.7+ef("art")*.6+ef("prog")*.5+ef("ux")*.4+ef("qa")*.4+Math.random()*4).toFixed(1)));
+ S.money-=cost;g.pl.p.push({id:Date.now(),n:W.n.trim()||PT[W.t][0]+" "+(n+1),t:W.t,ic:W.ic,c:W.c,em:W.em,img:W.img,q,me:1,b:2,inc:q*q*3*(1+(S.y-2007)*.2),v:0});
+ addXp(20);const id=W.pid;W=null;toast("Плейс создан. Он будет готов через 2 месяца");draw();platform(id)}
+/* ажиотаж, события, настройки */
+I.gear='<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>';
+const hc=()=>Object.values(S.st).reduce((a,b)=>a+b,0)-1,cap=()=>5+2*(S.lvl-1)+(S.xcap||0)+3*(S.of||0);
+const LV={prog:1,qa:1,art:1,snd:1,des:1,mkt:4};ST.forEach(x=>{if(LV[x[0]]!=null)x[3]=LV[x[0]]});ST.sort((x,y)=>x[3]-y[3]);
+const GF=["набор скинов","золотая валюта","новый питомец","редкий предмет","праздничный фейерверк","ящик сюрпризов"],MN=["охота за звёздами","быстрая гонка","день рекордов","ночной марафон","неделя двойного опыта"],CB=[["Студия Лучик","Мастерская Гриб","Кафе Пиксель","Мультстудия Зайка"],["Тандер Софт","Фабрика Лакомка","Спортбренд Рывок","Радио Волна"],["Мегакино Галактика","Супербренд Глобус","Мировая сеть Всесвет","Империя Звезда"]];
+Object.assign(EVK,{g:{n:"Подарок",cost:200,min:3,lvl:1,len:1,mul:.15,hy:5,d:"Раздай игрокам подарки. Небольшой, но приятный шаг."},m:{n:"Мини-событие",cost:500,min:4,lvl:2,len:1,mul:.25,hy:10,d:"Короткое событие на месяц."},b1:{n:"Коллаборация с малоизвестной компанией",cost:3000,min:6,lvl:8,len:3,mul:.7,hy:20,d:"Небольшой партнёр, но лояльная аудитория."},b2:{n:"Коллаборация с известной компанией",cost:10000,min:7,lvl:12,len:3,mul:1.2,hy:35,d:"Известный бренд приводит много новых игроков."},b3:{n:"Коллаборация с невероятно популярной компанией",cost:40000,min:9,lvl:20,len:4,mul:2.5,hy:60,d:"Мировой бренд. Огромный ажиотаж и прибыль."}});
+Object.assign(EVK.k,{lvl:3,hy:12,cost:600});Object.assign(EVK.i,{lvl:4,hy:15,cost:1500});Object.assign(EVK.t,{lvl:6,hy:20,cost:3000});Object.assign(EVK.c,{lvl:15,hy:40,cost:15000});
+const ORD=Object.keys(EVK).sort((a,b)=>EVK[a].lvl-EVK[b].lvl);
+function evTL(){const nx=ORD.find(k=>S.lvl<EVK[k].lvl);
+ return `<div class="card"><h3>Этапы развития</h3><p class="dim" style="margin:0 0 20px">Новые возможности открываются с уровнем. Каждое событие поднимает ажиотаж вокруг игры.</p><div class="tl">${EVS().map((k,i)=>{const c=EVK[k],lk=S.lvl<c.lvl;return `<div class="st ${lk?"lk":""} ${k==nx?"nx":""}" style="animation:up .55s var(--e) ${i*.07}s both"><div class="dot">${svg(lk?"lock":"check",18)}</div><div class="sc"><div class="sh2"><b>${c.n}</b><span class="tag">${lk?"с "+c.lvl+" уровня":"открыто"}</span></div><div class="dim">${c.d}</div>${lk?"":`<div class="meta">Оценка игры от ${c.min} · ${c.len} мес. · ажиотаж +${c.hy}</div><button class="btn s" onclick="pickEv('${k}')">${money(c.cost)}</button>`}</div></div>`}).join("")}</div></div>
+ <div class="card"><h3>Идут сейчас</h3>${S.ev.length?S.ev.map(e=>{const g=S.games.find(x=>x.id==e.gid);return g?`<div class="row">${ico(g)}<div class="t"><b>${e.n}</b><small>Осталось месяцев: ${e.left}</small><div class="bar" style="margin-top:8px"><i style="width:${(e.len-e.left)/e.len*100}%"></i></div></div></div>`:""}).join(""):`<p class="dim" style="margin:0">Сейчас ничего не проходит.</p>`}</div>
+ <div class="card"><h3>Итоги</h3>${S.res.length?S.res.slice(0,6).map(r=>`<div class="row"><div class="t">${r.t}<small>${NM[r.m]} ${r.y}</small></div></div>`).join(""):`<p class="dim" style="margin:0">Итогов пока нет.</p>`}</div>`}
+const PROMO={"ЛЕГКО":{df:"e"},"СРЕДНЕ":{df:"m"},"СЛОЖНО":{df:"h"},"EASY":{df:"e"},"NORMAL":{df:"m"},"HARD":{df:"h"},"СТАРТ":{m:3000},"ХИТ":{xp:150},"ПЛЕЙС":{m:10000},"ЗВЕЗДА":{m:25000},"КОНТЕНТ":{xp:400},"СИН":{sc:100},"TIHON":{pr:1},"IVAN":{pr:1},"ADMIN":{adm:1},"АДМИН":{adm:1}};
+const an=(el,n)=>{el.style.animation="none";void el.offsetWidth;el.style.animation=n+" .5s var(--e)"};
+function settings(f){const C=2*Math.PI*36,pc=S.xp/need(),d=i=>`animation:up .55s var(--e) ${i*.1}s both`;
+ mgShell(`<div class="sh"><h2>Настройки</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <div class="card" style="margin-top:16px;display:flex;gap:16px;align-items:center;${d(0)}"><svg width="96" height="96" viewBox="0 0 96 96" style="flex:none"><circle cx="48" cy="48" r="36" fill="none" stroke="var(--soft)" stroke-width="9"/><circle id="ring" cx="48" cy="48" r="36" fill="none" stroke="var(--ac)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 48 48)" style="transition:stroke-dashoffset 1.2s var(--e)"/><text x="48" y="56" text-anchor="middle" font-family="Georgia,serif" font-size="26" fill="currentColor">${S.lvl}</text></svg>
+ <div class="t" style="flex:1;min-width:0"><b>Уровень ${S.lvl} · ${rank()}</b><div class="dim">Опыт: ${S.xp} из ${need()}</div><div class="bar" style="margin:8px 0"><i style="width:${pc*100}%"></i></div><div class="dim">До уровня ${S.lvl+1} осталось ${need()-S.xp} опыта</div></div></div>
+ <div style="${d(1)}"><label>Сложность</label><div class="opts">${["e","m","h"].map(k=>`<div class="opt ${(S.df||"m")==k?"on":""}" style="display:grid;place-items:center;cursor:default">${DF[k].n}</div>`).join("")}</div>
+ <p class="dim" style="margin:8px 0 0">Сложность меняется промокодом: ЛЕГКО, СРЕДНЕ или СЛОЖНО.</p></div>
+ <div style="${d(2)}"><label>Промокод</label><div style="display:flex;gap:8px"><input type="text" id="pc" maxlength="20" placeholder="Введи промокод"><button class="btn" onclick="promo()">Применить</button></div><div id="pm" class="dim" style="margin-top:12px;min-height:24px"></div></div>
+ <div style="${d(3)}"><label>Сохранение</label><div class="foot" style="margin-top:0"><button class="btn" onclick="expDl()">Скачать файл</button><button class="btn o" onclick="expCp()">Скопировать</button></div>
+ <textarea id="exp" rows="3" readonly onclick="this.select()" style="margin-top:12px">${enc()}</textarea>
+ <textarea id="imp" rows="3" placeholder="Вставь данные сохранения" style="margin-top:12px"></textarea><div class="foot"><label class="btn o" style="margin:0">Выбрать файл<input type="file" hidden onchange="impFile(this)"></label><button class="btn" onclick="impGo()">Загрузить</button></div></div>
+ <div style="${d(4)}"><label>Иконка приложения</label><div class="g8" style="grid-template-columns:repeat(3,1fr)">${[0,1,2,3,4,5].map(i=>`<button class="opt ${(S.ai||0)==i?"on":""}" style="padding:8px;min-height:0" onclick="S.ai=${i};setIcons();save();settings()"><img alt="" src="${iconCanvas(96,i).toDataURL()}" style="width:100%;border-radius:18px;display:block"></button>`).join("")}</div></div>
+ <div style="${d(5)}"><label>Установка</label><p class="dim" style="margin:0 0 12px">Скачай игру файлом или установи как приложение на телефон.</p><div class="foot" style="margin-top:0"><button class="btn" onclick="dlGame()">Скачать файлом</button><button class="btn o" onclick="instApp()">Установить</button></div><button class="btn o" style="width:100%;margin-top:8px" onclick="apkInfo()">Как получить APK</button></div>`,f);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const r=$("ring");if(r)r.style.strokeDashoffset=C*(1-pc)}))}
+function promo(){const v=$("pc").value.trim().toUpperCase(),c=PROMO[v],m=$("pm");
+ const bad=t=>{m.textContent=t;m.style.color="#b3453a";an(m,"shk")};
+ if(!c)return bad("Такого промокода нет");if(!c.df&&S.codes.includes(v))return bad("Этот промокод уже использован");
+ if(c.df)S.df=c.df;else S.codes.push(v);if(c.pr){S.xcap=(S.xcap||0)+15;if(S.lvl<13){const a=S.lvl+1;S.lvl=13;S.xp=0;S.up=S.up?[S.up[0],13]:[a,13];setTimeout(showUp,1200)}S.title="Друг создателя";conf()}if(c.adm)S.adm=1;if(c.m)S.money+=c.m;if(c.sc)S.sc=(S.sc||0)+c.sc;if(c.xp)addXp(c.xp);
+ save();draw();m.style.color="var(--ok)";m.textContent=c.df?"Сложность: "+DF[c.df].n:c.pr?"Протокол "+v+": +15 мест для сотрудников, уровень 13":c.adm?"Админ-панель открыта в шторке":"Промокод применён";an(m,"pop");$("pc").value=""}
+/* отзывы: тысячи комбинаций */
+const RO=["Честно?","Вау!","Играю уже неделю.","Друзья посоветовали.","Не ожидал такого.","Зашло с первого раза.","Наконец-то нормальная игра.","Скачал просто так, остался надолго.","Лучшая находка месяца.","Спасибо разработчикам."];
+const PP={gfx:["Графика просто огонь.","Картинка радует глаз.","Визуал сделан с любовью.","Каждая деталь нарисована красиво.","Цвета и анимации на высоте.","Выглядит дороже, чем стоит.","Персонажи нарисованы отлично.","Оформление очень стильное."],snd:["Музыка заставляет улыбаться.","Звуки сделаны очень круто.","Саундтрек хочется слушать отдельно.","Озвучка просто класс.","Каждый звук на своём месте.","Мелодия в меню застряла в голове.","Звук погружает с головой.","Музыка подстраивается под игру."],qa:["Ни одного бага не встретил.","Всё работает гладко.","Игра ни разу не вылетела.","Загрузка быстрая, ошибок нет.","Отполировано до блеска.","Управление отзывчивое.","Стабильно даже на слабом телефоне.","Видно, что игру хорошо проверили."],des:["Геймплей затягивает.","Механики продуманы до мелочей.","Каждый уровень удивляет.","Сложность подобрана идеально.","Оторваться невозможно.","Идеи свежие и интересные.","Прогресс приятно ощущается.","Есть чем заняться часами."]};
+const RC=["Ставлю пять звёзд.","Рекомендую всем друзьям.","Буду ждать новые обновления.","Однозначно стоит попробовать.","Уже показал её семье.","Разработчикам респект.","Играйте, не пожалеете.","Это лучшая игра в списке."];
+const RN=["Эх.","Хотел похвалить, но нет.","Скачал по совету друга.","Сыграл пару часов.","Ну такое.","Надеялся на большее.","Обидно, идея была хорошая.","Скажу честно.","Разочарован.","Немного расстроился."];
+const NP={gfx:["Графика слабая","Картинка выглядит бедно","Персонажи нарисованы небрежно","Всё выглядит как из прошлого века","Цвета блёклые","Анимации почти нет","Интерфейс корявый","Глаза режет от такой картинки"].map(x=>x+", нужен художник."),snd:["Звука почти нет","Музыка отсутствует","Звуки режут слух","Озвучка плохая","Мелодия надоедает за минуту","В игре тишина","Звук хрипит","Эффекты не подходят"].map(x=>x+", нужен звукорежиссёр."),qa:["Много багов","Игра вылетает","Постоянные ошибки","Сохранения пропадают","Кнопки не нажимаются","Игра тормозит","Экран зависает","Баг на каждом уровне"].map(x=>x+", нужен тестировщик."),des:["Геймплей скучный","Не хватает идей","Быстро надоедает","Уровни однообразные","Сложность скачет","Нет цели в игре","Механики сырые","Играть неинтересно"].map(x=>x+", нужен геймдизайнер.")};
+const RK=["Исправьте, пожалуйста.","Жду улучшений.","Пока три звезды максимум.","Надеюсь на обновление.","Дайте шанс разработчикам.","Пока удалю."];
+const rvText=(good,k)=>good?pk(RO)+" "+pk(PP[k])+" "+pk(RC):pk(RN)+" "+pk(NP[k])+" "+pk(RK);
+PT.push(["Супергерои",1.3],["Школа магии",1.3],["Пираты",1.1],["Динозавры",1.2],["Кафе",.9],["Больница",.9],["Полиция",1],["Пожарные",1],["Зоопарк",.9],["Цирк",1],["Метро",.9],["Аэропорт",.9],["Стройка",.9],["Лыжный курорт",1],["Шахта",1.1],["Подземелье",1.3]);
+AC.push(["Первый подарок",()=>S.res.some(r=>r.k=="g")],["Первая коллаборация",()=>S.res.some(r=>r.k[0]=="b")],["Невероятный ажиотаж",()=>S.games.some(g=>(g.h||0)>=90)],["Ажиотаж больше половины",()=>S.games.some(g=>(g.h||0)>=50)],["Лимит команды: 15 человек",()=>hc()>=15]);
+/* админ-панель */
+I.shield='<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>';
+const enc=()=>btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+function admin(f){mgShell(`<div class="sh"><h2>Админ</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <div class="row f" style="margin-top:8px"><div class="t"><b>Режим админа</b><small>Открывает QR-коды, экспорт и импорт</small></div><button class="sw2 ${S.am?"on":""}" onclick="admTg()" aria-label="Переключить"><i></i></button></div>
+ ${S.am?`<div style="animation:up .5s var(--e) both"><label>QR-код</label><input type="text" id="qt" maxlength="100" placeholder="Текст или промокод"><div class="foot" style="margin-top:12px"><button class="btn" onclick="qrMake()">Создать QR</button><button class="btn o" onclick="qrDl()">Скачать</button></div><div id="qr"></div><div class="dim" id="qm"></div>
+ <label>Онлайн</label><p class="dim" style="margin:0 0 12px">В комнате друзей: ${CO.ok?2:1} из 2${CO.ok&&CO.rtt?", пинг "+CO.rtt+" мс":""}. Сколько всего людей сидит на сайте, игра показать не может: для этого нужен сервер.</p>
+ <label>Тест</label><div class="foot" style="margin-top:0"><button class="btn o" onclick="S.money+=2000000;draw()">+2 000 000 $</button><button class="btn o" onclick="S.sc=(S.sc||0)+100;toast('+100 монет')">+100 монет</button></div>
+ <div style="height:12px"></div><button class="btn o" onclick="crTest()">Создать дело об авторских правах</button>
+ <label>Экспорт данных</label><div class="foot" style="margin-top:0"><button class="btn" onclick="expDl()">Скачать файл</button><button class="btn o" onclick="expCp()">Скопировать</button></div>
+ <label>Импорт данных</label><textarea id="imp" rows="4" placeholder="Вставь данные или выбери файл"></textarea><div class="foot"><label class="btn o" style="margin:0">Выбрать файл<input type="file" hidden onchange="impFile(this)"></label><button class="btn" onclick="impGo()">Загрузить</button></div></div>`:`<p class="dim">Включи режим, чтобы открыть инструменты.</p>`}`,f)}
+function admTg(){S.am=!S.am;save();admin()}
+function qrLib(cb){if(window.QRCode)return cb();const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";e.onload=cb;e.onerror=()=>{$("qm").textContent="Для создания QR нужен интернет"};document.head.appendChild(e)}
+function qrMake(){const t=$("qt").value.trim();if(!t)return;$("qm").textContent="";qrLib(()=>{const b=$("qr");b.innerHTML="";new QRCode(b,{text:t,width:200,height:200,colorDark:"#1f1e1d",colorLight:"#ffffff"});an(b,"pop")})}
+function qrDl(){const c=document.querySelector("#qr canvas");if(!c)return toast("Сначала создай QR");const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="qr.png";a.click()}
+function expDl(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([enc()],{type:"text/plain"}));a.download="game-dev-save.txt";a.click()}
+function expCp(){const e=$("exp"),f=()=>{try{e.select();document.execCommand("copy");toast("Данные скопированы")}catch(x){toast("Нажми на поле с данными и скопируй вручную")}};try{navigator.clipboard.writeText(enc()).then(()=>toast("Данные скопированы"),f)}catch(x){f()}}
+function impFile(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("imp").value=r.result};r.readAsText(f)}
+function ask(t,y){window.__yes=y;mgShell(`<div class="tut" style="padding-top:8px"><h2>Подтверди</h2><p>${t}</p><div class="foot"><button class="btn o" onclick="closeM()">Отмена</button><button class="btn" onclick="__yes()">Да</button></div></div>`,true)}
+function impGo(){const t=($("imp").value||"").replace(/^\uFEFF/,"").trim().replace(/^["']|["']$/g,"");if(!t)return toast("Вставь данные сохранения");
+ let o;try{o=t[0]=="{"?JSON.parse(t):JSON.parse(decodeURIComponent(escape(atob(t.replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/")))))}catch(e){return toast("Не удалось прочитать данные. Скопируй их целиком")}
+ if(!o||typeof o.money!="number"||!Array.isArray(o.games))return toast("В этих данных нет сохранения игры");
+ ask("Заменить текущий прогресс загруженными данными?",()=>{S=o;fix();lastP=0;lastM=-1;save();closeM();draw(true);loop();pixHide();toast("Сохранение загружено")})}
+/* поэтапное открытие и новый контент */
+TABS.push(["Работники","up"]);I.up='<path d="M12 19V5M5 12l7-7 7 7"/>';
+G.push(["Аркада",2,1],["Квест",3,1.1],["Спортивная игра",5,1.2],["Детектив",6,1.3],["Карточная игра",7,1.3],["Шутер от первого лица",9,1.6],["Приключение",10,1.5],["Стелс",12,1.7],["Тактика",14,1.8],["Автосимулятор",16,1.9],["Градостроитель",18,2],["Экономическая стратегия",20,2.2],["Космическая опера",22,2.6],["Зомби-выживание",24,2.7],["Киберпанк",27,3],["Симулятор бога",29,3.2],["Военная стратегия",32,3.4],["Подводное приключение",34,3.5],["Фэнтези-онлайн",37,3.9],["Детская обучалка",40,3.6],["Игра-книга",42,3.8],["ИИ-компаньон",45,4.5],["Нейросимулятор",52,5.2],["Голографическая игра",56,5.6],["Игра будущего",60,6.5]);
+PT.push(["Конный клуб",.9],["Бассейн",.9],["Космодром",1.3],["Лаборатория",1.2],["Дворец",1.1],["Подводная лодка",1.2],["Деревня",.9],["Небоскрёб",1],["Остров сокровищ",1.2],["Ледяной мир",1.1],["Ночной клуб",1],["Библиотека",.8],["Музей",.9],["Гоночная трасса",1.1],["Заброшенный парк",1.3],["Космический корабль",1.3]);
+const gOk=i=>S.lvl>=G[i][1]&&S.y>=(G[i][3]||0),gvis=()=>{const a=G.map((_,i)=>i).sort((x,y)=>G[x][1]-G[y][1]||x-y);return a.filter(gOk).concat(a.filter(i=>!gOk(i)).slice(0,3))};
+const STV=()=>{const f=ST.findIndex(x=>S.lvl<x[3]);return f<0?ST:ST.slice(0,f+2)};
+const EVS=()=>{const f=ORD.findIndex(k=>S.lvl<EVK[k].lvl);return f<0?ORD:ORD.slice(0,f+2)};
+const acV=()=>{const L=[],U=[];AC.forEach(a=>a[1]()?U.push(a):L.push(a));return U.concat(L.slice(0,4))};
+const RNK=[[1,"Новичок"],[3,"Любитель"],[6,"Разработчик"],[10,"Профи"],[15,"Мастер"],[20,"Эксперт"],[30,"Легенда"],[40,"Гуру"],[50,"Создатель индустрии"]],rank=()=>RNK.filter(r=>S.lvl>=r[0]).pop()[1];
+const SP={10:"Новые разделы: Работники, Авторские права, Автоматизация"};
+function ulist(a,b){const o=[];G.forEach(g=>{if(g[1]>=a&&g[1]<=b)o.push("Новый жанр: "+g[0])});ST.forEach(x=>{if(x[3]>=a&&x[3]<=b)o.push("Новый сотрудник: "+x[1])});Object.keys(EVK).forEach(k=>{if(EVK[k].lvl>=a&&EVK[k].lvl<=b)o.push("Новое событие: "+EVK[k].n)});for(let l=a;l<=b;l++)if(SP[l])o.push(SP[l]);RNK.forEach(r=>{if(r[0]>=a&&r[0]<=b&&r[0]>1)o.push("Новый ранг: "+r[1])});o.push("Мест для сотрудников: "+cap());return o}
+function showUp(t){if(!S.up)return;if(document.querySelector(".modal")&&(t||0)<15)return setTimeout(()=>showUp((t||0)+1),2000);const[a,b]=S.up;S.up=null;
+ mgShell(`<div class="tut"><div class="big" style="background:var(--ac)"><b style="font:500 40px Georgia,serif">${b}</b></div><h2>${b>a?"Уровни "+a+"–"+b:"Новый уровень "+b}</h2><p>Ранг: ${rank()}</p><div style="text-align:left;margin-top:16px">${ulist(a,b).map((x,i)=>`<div class="row" style="animation:up .5s var(--e) ${.15+i*.1}s both"><div class="av">${svg("check",18)}</div><div class="t">${x}</div></div>`).join("")}</div><div class="foot"><button class="btn" onclick="closeM()">Отлично</button></div></div>`,true);conf()}
+Object.assign(PROMO,{"ПИКСЕЛЬ":{m:1000},"РЕТРО":{m:1000},"ЛУЧ":{m:1000},"ТУРБО":{m:2000},"ГЕЙМЕР":{m:2000},"ЗАПУСК":{m:3000},"ХИТПАРАД":{m:3000},"ДЖОЙСТИК":{m:3000},"ПРОРЫВ":{m:5000},"ЛЕГЕНДА":{m:5000},"КУБОК":{m:5000},"ЗОЛОТО":{m:10000},"ГАЛАКТИКА":{m:15000},"СУПЕРХИТ":{m:20000},"МИЛЛИОН":{m:50000}});
+AC.push(["Ранг: Профи",()=>S.lvl>=10],["Уровень 50",()=>S.lvl>=50],["Улучшил команду",()=>Object.values(S.ul||{}).some(v=>v>0)],["Пять улучшений команды",()=>Object.values(S.ul||{}).reduce((a,b)=>a+b,0)>=5],["Первое улучшение до максимума",()=>Object.values(S.ul||{}).some(v=>v>=5)]);
+/* работники */
+const ul=k=>(S.ul||{})[k]||0,ef=k=>pow(k)*(1+.25*ul(k)),upc=k=>Math.round(ST.find(x=>x[0]==k)[2]*4*(ul(k)+1));
+function wkUp(k){if(S.lvl<10||ul(k)>=5||pow(k)<1)return;const c=upc(k);if(S.money<c)return toast("Не хватает денег");S.money-=c;S.ul=S.ul||{};S.ul[k]=ul(k)+1;draw()}
+function wkAll(){ST.forEach(s=>{const k=s[0];if(pow(k)>0&&ul(k)<5){const c=upc(k);if(S.money>=c){S.money-=c;S.ul=S.ul||{};S.ul[k]=ul(k)+1}}});draw()}
+function wkView(){
+ if(S.lvl<10)return `<div class="card tut"><div class="big" style="background:var(--soft);color:var(--mt)">${svg("lock",44)}</div><h2>Работники</h2><p>Улучшение команды откроется с 10 уровня. Сейчас у тебя ${S.lvl} уровень.</p><div class="bar" style="margin-top:16px"><i style="width:${Math.min(100,S.lvl*10)}%"></i></div></div>`;
+ const L=ST.filter(s=>pow(s[0])>0);
+ return `<div class="card"><h3>Улучшение команды</h3><p class="dim" style="margin:0 0 16px">Каждый уровень улучшения добавляет 25% к вкладу роли в скорость и качество игр.</p><button class="btn" onclick="wkAll()" ${L.some(s=>ul(s[0])<5)?"":"disabled"}>Улучшить всех</button></div>
+ <div class="card"><h3>Роли</h3>${L.length?L.map((s,i)=>{const k=s[0],m=ul(k)>=5,c=upc(k);return `<div class="row" style="animation:up .5s var(--e) ${i*.06}s both"><div class="av">${s[1][0]}</div><div class="t"><b>${s[1]}</b> · в штате ${pow(k)}<div class="pips">${[1,2,3,4,5].map(n=>`<i class="${n<=ul(k)?"on":""}"></i>`).join("")}</div><small>Вклад +${ul(k)*25}%</small></div><button class="btn s" ${m||S.money<c?"disabled":""} onclick="wkUp('${k}')">${m?"Максимум":money(c)}</button></div>`}).join(""):`<p class="dim" style="margin:0">Наймите сотрудников во вкладке «Команда».</p>`}</div>`}
+/* настройки игры */
+function gameSet(id){const g=S.games.find(x=>x.id==id);if(!g)return;W={gid:id,n:g.n,ic:g.ic,c:g.c,em:g.em,img:g.img};gsWiz(true)}
+function gsWiz(f){const g=S.games.find(x=>x.id==W.gid);
+ mgShell(`<div class="sh"><h2>Настройки игры</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div>
+ <div class="st3"><div><b>${(g.sc/2).toFixed(1)}</b><small>Оценка</small></div><div><b>${Math.round(g.h||0)}%</b><small>Ажиотаж</small></div><div><b>v${g.v||1}</b><small>Версия</small></div></div>
+ <label style="margin-top:0">Название</label><input type="text" maxlength="24" value="${esc(W.n)}" oninput="W.n=this.value">
+ <label>Иконка</label>${icPick()}
+ <div class="foot"><button class="btn o" onclick="closeM()">Отмена</button><button class="btn" onclick="gsSave()">Сохранить</button></div>
+ <button class="btn o" style="width:100%;margin-top:12px;color:#b3453a" onclick="gsDel()">Удалить игру</button>`,f)}
+function gsSave(){const g=S.games.find(x=>x.id==W.gid);if(g){g.n=W.n.trim()||g.n;g.ic=W.ic;g.c=W.c;g.em=W.em;g.img=W.img}closeM();draw()}
+function gsDel(){const id=W.gid;ask("Удалить игру насовсем?",()=>{S.games=S.games.filter(x=>x.id!=id);S.msgs=S.msgs.filter(m=>m.gid!=id);S.ev=S.ev.filter(e=>e.gid!=id);closeM();draw()})}
+/* авторские права, автоматизация, порт, головоломки */
+TABS.push(["Авторские права","shield"],["Автоматизация","bolt"]);I.bolt='<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>';
+const ab=()=>S.y*12+S.m,AUC=500000,PORTC=5000;
+const lk10=t=>`<div class="card tut"><div class="big" style="background:var(--soft);color:var(--mt)">${svg("lock",44)}</div><h2>${t}</h2><p>Откроется с 10 уровня. Сейчас у тебя ${S.lvl} уровень.</p><div class="bar" style="margin-top:16px"><i style="width:${Math.min(100,S.lvl*10)}%"></i></div></div>`;
+const CPS=["Студия Клон","Игры Тень","Быстрые Игры","Дубль Софт","Серая Мастерская","Копи-Геймс","Лёгкая Нажива","Подражатель"],CPX=["Супер","Мега","Турбо","Новый","Тёмный","Дикий"],CPN=["Герой","Бегун","Страж","Рыцарь","Охотник","Воин"];
+AC.push(["Выиграл суд",()=>S.cr.w>0],["Три победы в суде",()=>S.cr.w>=3],["Автоматизация обновлений",()=>S.au.y>0],["Порт на телефон",()=>S.games.some(g=>g.port)],["Интернет-продвижение",()=>S.pr.length>0]);
+function crTick(){if(S.lvl<10)return;const C=S.cr;if(C.n==null)C.n=ab()+CRI();
+ if(ab()>=C.n){const a=S.games.filter(g=>g.sc>=5&&!g.reg);if(!a.length)return;const g=pk(a);C.c.unshift({id:Date.now(),gid:g.id,by:pk(CPS),t:pk(CPX)+" "+pk(CPN),y:S.y,m:S.m,d:0});C.n=ab()+CRI();toast("Твоего персонажа из «"+g.n+"» использовали без спроса. Смотри «Авторские права»")}}
+function crTest(){const g=S.games[0];if(!g)return toast("Нужна хотя бы одна игра");S.cr.c.unshift({id:Date.now(),gid:g.id,by:pk(CPS),t:pk(CPX)+" "+pk(CPN),y:S.y,m:S.m,d:0});toast("Дело создано");draw()}
+function crView(){if(S.lvl<10)return lk10("Авторские права");const C=S.cr,op=C.c.filter(c=>!c.d),cl=C.c.filter(c=>c.d).slice(0,4);
+ return `<div class="card"><h3>Авторские права</h3><p class="dim" style="margin:0">Иногда чужие студии используют твоих персонажей. Такие дела бывают примерно раз в ${(S.rb||0)>=2?"1–5":"5–10"} лет. Выиграно: ${C.w}, проиграно: ${C.l}.</p></div>
+ <div class="card"><h3>Открытые дела</h3>${op.length?op.map((c,i)=>{const g=S.games.find(x=>x.id==c.gid);return g?`<div class="row" style="animation:up .5s var(--e) ${i*.08}s both">${ico(g)}<div class="t"><b>«${esc(c.t)}»</b><small>Студия «${c.by}» использует персонажа из «${esc(g.n)}». Доход игры снижен на 20%.</small></div><div class="acts" style="margin:0;flex-direction:column"><button class="btn s" onclick="courtStart(${c.id})">В суд</button><button class="btn s o" onclick="crSettle(${c.id})">Договориться</button></div></div>`:""}).join(""):`<p class="dim" style="margin:0">Сейчас дел нет.</p>`}</div>
+ ${crTools()}${crBrand()}${cl.length?`<div class="card"><h3>Закрытые дела</h3>${cl.map(c=>`<div class="row"><div class="t">${c.d==1?"Суд выигран":c.d==3?"Мировое соглашение":"Суд проигран"}: «${esc(c.t)}»<small>${NM[c.m]} ${c.y}</small></div></div>`).join("")}</div>`:""}`}
+const QB=[["Что защищает авторское право?","Оригинальные произведения|Любые идеи и методы|Названия компаний",0],["Кто автор игры по умолчанию?","Тот, кто её создал|Тот, кто купил копию|Случайный игрок",0],["Можно ли использовать чужого персонажа без разрешения?","Нет, нужно разрешение|Да, всегда|Только по выходным",0],["Какой знак обозначает авторское право?"," ©|$|№",0],["Что такое плагиат?","Выдача чужого за своё|Покупка лицензии|Перевод книги",0],["Что делает суд?","Решает спор по закону|Рисует персонажей|Выпускает игры",0],["Что такое лицензия?","Разрешение использовать произведение|Запрет на любое использование|Название игры",0],["Можно ли подать в суд, если украли персонажа?","Да, можно|Нет, никогда|Только в другой стране",0],["Что поможет доказать авторство?","Черновики и исходные файлы|Слова незнакомцев|Ничего не нужно",0],["Кому принадлежит придуманный тобой персонаж?","Тебе как автору|Любому игроку|Случайному человеку",0],
+["Сколько в России действуют права после смерти автора?","70 лет|5 лет|1 год",1],["Что такое компенсация?","Выплата за причинённый ущерб|Новая игра|Скидка в магазине",1],["Кто такой ответчик?","Тот, на кого подан иск|Тот, кто подал иск|Судья",1],["Кто такой истец?","Тот, кто подаёт иск|Свидетель|Адвокат противника",1],["Что даёт свободная лицензия?","Использовать по заранее разрешённым условиям|Забрать произведение себе|Ничего",1],["Что такое пародия?","Шуточное подражание с самостоятельным смыслом|Точная копия|Реклама",1],["Что такое доказательство в суде?","Факт, подтверждающий позицию|Мнение прохожего|Слух",1],["Что такое товарный знак?","Обозначение, отличающее товары компании|Название жанра|Вид лицензии",1],["Если копия отличается чуть-чуть, это…","Всё равно может быть нарушением|Всегда законно|Всегда наградой",1],["Что такое отчуждение прав?","Передача прав по договору|Кража|Плагиат",1],
+["Защищаются ли идеи авторским правом?","Нет, защищается только их выражение|Да, любые идеи|Только в играх",2],["Что такое добросовестное использование?","Ограниченное использование, например цитирование|Любое копирование|Продажа копий",2],["Что такое мировое соглашение?","Договорённость сторон, которая закрывает спор|Приговор суда|Отказ без причин",2],["Что такое срок исковой давности?","Время, в течение которого можно подать иск|Время работы суда|Срок жизни игры",2],["Кто обычно доказывает нарушение?","Истец|Всегда судья|Никто",2],["Что такое производное произведение?","Созданное на основе другого произведения|Оригинал без источников|Удалённая игра",2],["Можно ли запретить использовать обычное слово в названии?","Обычные слова защитить очень трудно|Да, любое слово|Только на английском",2]];
+function courtStart(cid){const q=[0,1,2].flatMap(t=>shuf(QB.filter(x=>x[2]==t)).slice(0,((S.rb||0)>=2?[5,3,2]:[8,5,2])[t])).map(x=>[x[0],shuf(x[1].split("|").map((v,i)=>[v.trim(),i==0]))]);MG={k:"c",cid,q,i:0,bad:0,lock:0};courtDraw(true)}
+function courtDraw(f){const q=MG.q[MG.i];mgShell(`<div class="sh"><h2>Суд</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0">Вопрос ${MG.i+1} из ${MG.q.length}. Ошибок: ${MG.bad} из ${2+(S.cr.lw||0)}. Лишняя ошибка проигрывает дело.</p><div class="bar"><i style="width:${MG.i/MG.q.length*100}%"></i></div><h3 style="margin:20px 0 12px;animation:slin .4s var(--e) both">${q[0]}</h3>${q[1].map((o,j)=>`<button class="opt" style="display:block;width:100%;margin-bottom:8px;animation:up .4s var(--e) ${j*.06}s both" onclick="courtAns(${j})">${o[0]}</button>`).join("")}`,f)}
+function courtAns(j){if(MG.lock)return;MG.lock=1;const q=MG.q[MG.i],ok=q[1][j][1],b=document.querySelectorAll(".sheet .opt");b[j].classList.add(ok?"ok":"bad");if(!ok)b[q[1].findIndex(o=>o[1])].classList.add("ok");setTimeout(()=>courtNext(ok),900)}
+function courtNext(ok){if(!MG||MG.k!="c")return;MG.lock=0;if(!ok)MG.bad++;if(MG.bad>=2+(S.cr.lw||0))return courtEnd(0);if(++MG.i>=MG.q.length)return courtEnd(1);courtDraw()}
+function courtEnd(w){const C=S.cr,c=C.c.find(x=>x.id==MG.cid),g=c&&S.games.find(x=>x.id==c.gid);let t,sub;if(c)c.d=w?1:2;
+ if(w){C.w++;S.sc=(S.sc||0)+5;const r=Math.round(((g?g.inc:0)*12+20000)*df().i);S.money+=r;addXp(150);if(g)g.h=Math.min(100,(g.h||0)+20);t="Суд выигран";sub="Копия удалена. Компенсация: "+money(r);conf()}
+ else{C.l++;t="Суд проигран";sub="Дело проиграно.";if(g){S.games=S.games.filter(x=>x.id!=g.id);S.msgs=S.msgs.filter(m=>m.gid!=g.id);S.ev=S.ev.filter(e=>e.gid!=g.id);if(S.dev&&S.dev.upd==g.id)S.dev=null;sub="Игра «"+esc(g.n)+"» удалена."}}
+ mgShell(`<div class="tut"><div class="big" style="background:${w?"var(--ok)":"#b3453a"}">${svg(w?"check":"x",48)}</div><h2>${t}</h2><p>${sub}</p><div class="foot"><button class="btn" onclick="closeM();draw(true)">Хорошо</button></div></div>`)}
+/* автоматизация и продвижение */
+const PRM=[["Реклама в соцсетях",10000,3,.3,15],["Блогеры и стримеры",60000,4,.8,30],["Крупная интернет-кампания",250000,6,1.8,55]];
+function auTg(id){const a=S.au.g,i=a.indexOf(id);if(i>=0)a.splice(i,1);else if(a.length<3)a.push(id);else toast("Можно выбрать не более трёх игр");draw()}
+function auBuy(){if(S.au.on||S.money<AUC||!S.au.g.length)return;S.money-=AUC;S.au.on=1;S.au.y=S.y;toast("Автоматизация куплена");draw()}
+function auBill(){if(!S.au.on)return;if(S.money>=AUC){S.money-=AUC;S.au.y=S.y;toast("Автоматизация продлена на "+S.y+" год")}else{S.au.on=0;toast("Автоматизация отключена: не хватило денег")}}
+function auTick(){if(!S.au.on)return;S.au.g.forEach(id=>{const g=S.games.find(x=>x.id==id);if(g&&(S.msgs.some(m=>m.gid==id)||(g.cd||0)>=12))autoUpd(g)})}
+function autoUpd(g){const q=3+ef("des")*.7+ef("art")*.6+ef("snd")*.4+ef("qa")*.8+ef("ux")*.4+ef("comp")*.4+ef("ai")*.8+tb("q")+(S.y-2007)*.15+Math.random()*3;
+ g.sc=Math.max(1,Math.min(10,+((q/1.4+g.sc)/2+.3).toFixed(1)));g.v=(g.v||1)+1;g.cd=0;g.h=Math.min(100,(g.h||0)+20);g.a=snap();g.inc=g.sc*g.sc*8*GN(g)[2]*(1+ef("mkt")*.5)*(1+(S.y-2007)*.25)*(g.port?1.6:1)*(g.mx||1);g.rv=genRev(g,2).concat(g.rv||[]).slice(0,12);S.msgs=S.msgs.filter(m=>m.gid!=g.id);addXp(10);toast("Автоматически вышло обновление «"+g.n+"»")}
+function auView(){if(S.lvl<10)return lk10("Автоматизация");const A=S.au;
+ return `<div class="card"><h3>Автоматизация обновлений</h3><p class="dim" style="margin:0 0 16px">За ${money(AUC)} в год до трёх выбранных игр обновляются сами, без мини-игр. ${A.on?"Активна до конца "+A.y+" года.":""}</p>
+ ${S.games.length?S.games.map((g,i)=>`<div class="row" style="animation:up .5s var(--e) ${i*.05}s both">${ico(g)}<div class="t"><b>${esc(g.n)}</b><small>${A.g.includes(g.id)?"Выбрана":"Не выбрана"}</small></div><button class="sw2 ${A.g.includes(g.id)?"on":""}" onclick="auTg(${g.id})" aria-label="Выбрать"><i></i></button></div>`).join(""):`<p class="dim">Сначала выпусти игру.</p>`}
+ <div class="foot">${A.on?`<button class="btn o" onclick="S.au.on=0;draw()">Отключить</button>`:`<button class="btn" ${A.g.length&&S.money>=AUC?"":"disabled"} onclick="auBuy()">Купить за ${money(AUC)}</button>`}</div></div>
+ <div class="card"><h3>Продвижение в интернете</h3>${PRM.map((p,i)=>`<div class="row" style="animation:up .5s var(--e) ${i*.08}s both"><div class="t"><b>${p[0]}</b><small>${p[2]} мес. · доход +${Math.round(p[3]*100)}% · ажиотаж +${p[4]}</small></div><button class="btn s" onclick="pickPr(${i})">${money(p[1])}</button></div>`).join("")}</div>
+ ${S.pr.length?`<div class="card"><h3>Идёт продвижение</h3>${S.pr.map(p=>{const g=S.games.find(x=>x.id==p.gid);return g?`<div class="row">${ico(g)}<div class="t"><b>${p.n}</b><small>Осталось месяцев: ${p.left}</small><div class="bar" style="margin-top:8px"><i style="width:${(p.len-p.left)/p.len*100}%"></i></div></div></div>`:""}).join("")}</div>`:""}`}
+function pickPr(i){const p=PRM[i];mgShell(`<div class="sh"><h2>${p[0]}</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0">Выбери игру для продвижения.</p>${S.games.length?S.games.map(g=>`<div class="row">${ico(g)}<div class="t"><b>${esc(g.n)}</b><div class="stars">${stars(g.sc/2)}</div></div><button class="btn s" ${S.money<p[1]?"disabled":""} onclick="prGo(${i},${g.id})">${money(p[1])}</button></div>`).join(""):`<p>Сначала выпусти игру.</p>`}`,true)}
+function prGo(i,id){const p=PRM[i],g=S.games.find(x=>x.id==id);if(!g||S.money<p[1])return;S.money-=p[1];S.pr.push({gid:id,n:p[0]+": «"+esc(g.n)+"»",left:p[2],len:p[2],mul:p[3]});g.h=Math.min(100,(g.h||0)+p[4]);closeM();toast("Продвижение началось");draw(true)}
+/* порт на телефон */
+const PORTBTN=g=>g.o=="h"&&!g.port?`<button class="btn s" ${S.dev||S.money<PORTC?"disabled":""} onclick="startPort(${g.id})">На телефон ${money(PORTC)}</button>`:g.port?`<span class="tag">Есть на телефоне</span>`:"";
+function startPort(id){const g=S.games.find(x=>x.id==id);if(!g||S.dev)return;if(S.money<PORTC)return toast("Не хватает денег");S.money-=PORTC;S.dev={n:g.n,g:g.g,ap:g.ap||0,ic:g.ic,c:g.c,em:g.em,img:g.img,o:"v",p:0,upd:id,port:1};lastP=0;S.tab=0;toast("Порт на телефон начался");draw(true);$("main").scrollTop=0}
+const phoneGame=()=>pk([wireGame,memGame,ordGame,simGame,bugGame,slideGame])();
+const pzHead=(t,d)=>`<div class="sh"><h2>${t}</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0 0">${d}</p>`;
+function memGame(){MG={k:"m",c:shuf(shuf(IC).slice(0,6).flatMap(v=>[v,v])).map(v=>({v,o:0,f:0})),sel:[],mv:0,last:-1,lock:0};memDraw(true)}
+function memDraw(f){mgShell(pzHead("Найди пары","Открывай карточки и находи одинаковые. Ходов: "+MG.mv)+`<div class="pz g3">${MG.c.map((c,i)=>`<button class="pc ${c.f?"ok":c.o?"on":""}" ${i==MG.last?'style="animation:pop .4s var(--e)"':""} onclick="memFlip(${i})">${c.o||c.f?c.v:""}</button>`).join("")}</div>`,f)}
+function memFlip(i){const c=MG.c[i];if(MG.lock||c.o||c.f)return;c.o=1;MG.sel.push(i);MG.last=i;if(MG.sel.length==2){MG.mv++;MG.lock=1;setTimeout(memCheck,650)}memDraw()}
+function memCheck(){if(!MG||MG.k!="m")return;const[a,b]=MG.sel.map(i=>MG.c[i]);if(a.v==b.v){a.f=b.f=1}a.o=b.o=0;MG.sel=[];MG.lock=0;memDraw();if(MG.c.every(c=>c.f)){const m=MG.mv;setTimeout(()=>mgWin(m<=9?.5:0),700)}}
+function ordGame(){MG={k:"o",n:shuf([1,2,3,4,5,6,7,8,9]),nx:1,err:0,shk:-1};ordDraw(true)}
+function ordDraw(f){mgShell(pzHead("Числа по порядку","Нажимай числа от 1 до 9 по порядку. Ошибок: "+MG.err)+`<div class="pz g3">${MG.n.map((v,i)=>`<button class="pc ${v<MG.nx?"ok":v==MG.hl?"hint":""}" ${i==MG.shk?'style="animation:shk .4s"':""} onclick="ordTap(${v},${i})">${v}</button>`).join("")}</div>`,f)}
+function ordTap(v,i){if(v<MG.nx)return;MG.shk=-1;if(v==MG.nx){MG.nx++}else{MG.err++;MG.shk=i}ordDraw();if(MG.nx>9){const e=MG.err;setTimeout(()=>mgWin(e?0:.5),700)}}
+function simGame(){MG={k:"s",seq:Array.from({length:5},()=>Math.random()*4|0),i:0,show:1,hl:-1,err:0};simDraw(true);simPlay()}
+function simDraw(f){mgShell(pzHead("Повтори сигнал",MG.show?"Смотри внимательно":"Повтори последовательность. Ошибок: "+MG.err)+`<div class="pz g2">${WC.map((c,i)=>`<button class="pc ${MG.hl==i?"lit":""}" style="background:${c}" onclick="simTap(${i})" aria-label="Цвет ${i+1}"></button>`).join("")}</div>`,f)}
+function simPlay(){MG.show=1;MG.i=0;const m=MG;m.seq.forEach((c,k)=>{setTimeout(()=>{if(MG==m){m.hl=c;simDraw()}},700+k*700);setTimeout(()=>{if(MG==m){m.hl=-1;simDraw()}},700+k*700+400)});setTimeout(()=>{if(MG==m){m.show=0;simDraw()}},700+m.seq.length*700)}
+function simTap(c){if(MG.show)return;const m=MG;m.hl=c;simDraw();setTimeout(()=>{if(MG==m){m.hl=-1;simDraw()}},200);if(c==m.seq[m.i]){m.i++;if(m.i>=m.seq.length){const e=m.err;setTimeout(()=>mgWin(e?0:.5),500)}}else{m.err++;setTimeout(()=>{if(MG==m)simPlay()},600)}}
+/* технологии по годам, тренды, новые жанры */
+TABS.push(["Технологии","chip"]);I.chip='<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>';
+G.push(["Мобильная ферма",2,1.1,2008],["Социальная игра",3,1.2,2009],["Инди-платформер",5,1.3,2011],["Стрим-игра",8,1.6,2015],["VR-симулятор",11,2,2016],["Королевская арена",13,2.2,2017],["Облачная игра",15,2.4,2019],["Квест метавселенной",19,2.8,2021],["ИИ-детектив",23,3.2,2023],["Нейро-RPG",28,3.8,2027]);
+const TG=()=>{const a=G.map((_,i)=>i).filter(i=>S.lvl>=G[i][1]&&S.y>=(G[i][3]||0));return a[(S.y*5+2)%a.length]};
+const TECH=[[2007,"Движок Flash",400,"s",.1],[2007,"Звуковая библиотека",600,"q",.2],[2008,"Платежи в приложении",1500,"i",.05],[2009,"Социальная сеть игроков",3000,"i",.08],[2010,"Облачные сохранения",5000,"q",.2],[2011,"Трёхмерный движок",9000,"s",.15],[2012,"Бесплатно с покупками",15000,"i",.1],[2013,"Физический движок",25000,"q",.3],[2014,"Магазины игр",40000,"i",.1],[2015,"Стриминг из игры",60000,"i",.12],[2016,"Дополненная реальность",90000,"q",.3],[2017,"Сетевой код для баталий",130000,"s",.15],[2018,"Кроссплатформенность",200000,"i",.15],[2019,"Облачный гейминг",300000,"s",.2],[2020,"Трассировка лучей",450000,"q",.4],[2021,"Метавселенные",650000,"i",.15],[2022,"Редактор для игроков",900000,"i",.2],[2023,"ИИ-помощник",1300000,"s",.25],[2024,"Генерация миров",1900000,"q",.5],[2025,"Нейроголос",2700000,"q",.4],[2026,"Умные персонажи",4000000,"i",.25],[2027,"Нейроинтерфейс",6000000,"s",.3],[2028,"Полное погружение",9000000,"q",.6],[2029,"ИИ-напарники",13000000,"i",.3],[2030,"Квантовые вычисления",20000000,"s",.35],[2031,"Голографический экран",30000000,"q",.7],[2032,"Мгновенная генерация",45000000,"s",.4],[2033,"Единая метавселенная",70000000,"i",.4],[2034,"Игры на любом экране",100000000,"q",.8],[2035,"Золотой стандарт",150000000,"i",.5]];
+const tb=t=>TECH.reduce((a,x,i)=>S.tech&&S.tech[i]&&x[3]==t?a+x[4]:a,0),TL={s:"скорость разработки",q:"качество игр",i:"доход"};
+const effTx=x=>x[3]=="q"?"качество +"+x[4]:TL[x[3]]+" +"+Math.round(x[4]*100)+"%";
+function techBuy(i){const x=TECH[i];if(S.tech[i]||S.y<x[0])return;if(S.money<x[2])return toast("Не хватает денег");S.money-=x[2];S.tech[i]=1;toast("Технология изучена: "+x[1]);draw()}
+function techView(){const f=TECH.findIndex(x=>S.y<x[0]),V=f<0?TECH.map((_,i)=>i):TECH.map((_,i)=>i).filter(i=>S.y>=TECH[i][0]||i<=f+1);
+ return `<div class="card"><h3>Технологии</h3><p class="dim" style="margin:0">Технологии открываются с годами и дают постоянный бонус. Сейчас ${S.y} год. Скорость +${Math.round(tb("s")*100)}%, качество +${tb("q").toFixed(1)}, доход +${Math.round(tb("i")*100)}%.</p></div>
+ <div class="card"><h3>Список</h3>${V.map((i,n)=>{const x=TECH[i],lk=S.y<x[0],has=S.tech[i];return `<div class="row" style="${lk?"opacity:.55;":""}animation:up .5s var(--e) ${Math.min(n,10)*.05}s both"><div class="av" style="${has?"background:var(--ok);color:#fff":""}">${svg(has?"check":lk?"lock":"chip",20)}</div><div class="t"><b>${x[1]}</b><small>${lk?"Откроется в "+x[0]+" году":effTx(x)}</small></div>${has?"":`<button class="btn s" ${lk||S.money<x[2]?"disabled":""} onclick="techBuy(${i})">${lk?x[0]:money(x[2])}</button>`}</div>`}).join("")}</div>`}
+AC.push(["Первая технология",()=>Object.keys(S.tech).length>=1],["Десять технологий",()=>Object.keys(S.tech).length>=10],["Все технологии",()=>Object.keys(S.tech).length>=TECH.length]);
+let mv=null,twOn=0;function tw(){if(mv==null)mv=S.money;const d=S.money-mv;if(Math.abs(d)<1){mv=S.money;$("mn").textContent=mh(mv);twOn=0;return}mv+=d*.2;$("mn").textContent=mh(mv);twOn=1;requestAnimationFrame(tw)}
+/* новые мини-игры */
+function bugGame(){MG={k:"b",hit:0,miss:0,cur:-1};bugNext(true)}
+function bugDraw(f){mgShell(pzHead("Поймай баги","Нажимай на баги, пока они не исчезли. Поймано: "+MG.hit+" из 10 · упущено: "+MG.miss)+`<div class="pz g3">${Array.from({length:9},(_,i)=>`<button class="pc" onclick="bugTap(${i})">${i==MG.cur?`<span style="color:#b3453a;animation:pop .3s var(--e)">✹</span>`:""}</button>`).join("")}</div>`,f)}
+function bugNext(f){const m=MG;if(!m||m.k!="b")return;m.cur=Math.random()*9|0;bugDraw(f);m.t=setTimeout(()=>{if(MG!=m)return;m.miss++;m.cur=-1;bugDraw();setTimeout(()=>{if(MG==m)bugNext()},250)},900)}
+function bugTap(i){const m=MG;if(m.cur!=i)return;clearTimeout(m.t);m.hit++;m.cur=-1;bugDraw();if(m.hit>=10){const x=m.miss;return setTimeout(()=>mgWin(x<=3?.5:0),400)}setTimeout(()=>{if(MG==m)bugNext()},250)}
+function slideGame(){let a=[1,2,3,4,5,6,7,8,0],z=8;for(let i=0;i<60;i++){const n=[],r=z/3|0,c=z%3;if(r>0)n.push(z-3);if(r<2)n.push(z+3);if(c>0)n.push(z-1);if(c<2)n.push(z+1);const j=pk(n);[a[z],a[j]]=[a[j],a[z]];z=j}MG={k:"p8",a,mv:0,last:-1};slideDraw(true)}
+function slideDraw(f){mgShell(pzHead("Пятнашки","Расставь числа по порядку, пустая клетка в конце. Ходов: "+MG.mv)+`<div class="pz g3">${MG.a.map((v,i)=>v?`<button class="pc ${v==i+1?"ok":""}" ${i==MG.last?'style="animation:pop .35s var(--e)"':""} onclick="slideTap(${i})">${v}</button>`:`<div></div>`).join("")}</div>`,f)}
+function slideTap(i){const z=MG.a.indexOf(0);if(Math.abs((i/3|0)-(z/3|0))+Math.abs(i%3-z%3)!=1)return;MG.a[z]=MG.a[i];MG.a[i]=0;MG.mv++;MG.last=z;slideDraw();if(MG.a.every((v,k)=>v==(k+1)%9)){const m=MG.mv;setTimeout(()=>mgWin(m<=45?.5:0),700)}}
+function timeGame(){const z=15+Math.random()*50|0;MG={k:"t",x:0,d:1,hit:0,err:0,sp:1.6,z:[z,z+22]};MG.iv=setInterval(()=>{const m=MG;if(!m||m.k!="t")return;m.x+=m.d*m.sp;if(m.x>=100){m.x=100;m.d=-1}if(m.x<=0){m.x=0;m.d=1}const e=$("tm");if(e)e.style.left=m.x+"%"},16);timeDraw(true)}
+function timeDraw(f){mgShell(pzHead("Остановка в зоне","Нажми «Стоп», когда маркер в зелёной зоне. Нужно 3 попадания. Попаданий: "+MG.hit+" · промахов: "+MG.err)+`<div style="position:relative;height:28px;background:var(--soft);border-radius:14px;margin:32px 0;overflow:hidden"><div style="position:absolute;top:0;bottom:0;left:${MG.z[0]}%;width:22%;background:#2f7d5b44;animation:pop .4s var(--e)"></div><div id="tm" style="position:absolute;top:2px;bottom:2px;width:8px;border-radius:4px;background:var(--ac);left:${MG.x}%"></div></div><button class="btn" style="width:100%" onclick="timeStop()">Стоп</button>`,f)}
+function timeStop(){const m=MG;if(!m||m.k!="t")return;if(m.x>=m.z[0]&&m.x<=m.z[1]){m.hit++;if(m.hit>=3){clearInterval(m.iv);const e=m.err;return mgWin(e<=1?.5:0)}m.sp*=1.3;const z=10+Math.random()*60|0;m.z=[z,z+22]}else m.err++;timeDraw()}
+function mathGame(){MG={k:"a",i:0,err:0};mathQ(true)}
+function mathQ(f){const a=2+Math.random()*10|0,b=2+Math.random()*10|0,o=pk(["+","−","×"]),r=o=="+"?a+b:o=="−"?a-b:a*b,w=new Set([r]);while(w.size<3)w.add(r+pk([-3,-2,-1,1,2,3,10,-10]));MG.t=a+" "+o+" "+b;MG.hl=null;MG.o=shuf([...w]);MG.r=r;mathDraw(f)}
+function mathDraw(f){mgShell(pzHead("Быстрый счёт","Реши 5 примеров. Решено: "+MG.i+" из 5 · ошибок: "+MG.err)+`<h2 style="text-align:center;margin:24px 0;font-size:40px;animation:slin .35s var(--e) both">${MG.t} = ?</h2><div class="pz g3" style="margin-top:0">${MG.o.map(v=>`<button class="pc ${v===MG.hl?"hint":""}" onclick="mathAns(${v})">${v}</button>`).join("")}</div>`,f)}
+function mathAns(v){const m=MG;if(v==m.r){m.i++;if(m.i>=5){const e=m.err;mathDraw();return setTimeout(()=>mgWin(e?0:.5),500)}mathQ()}else{m.err++;mathQ()}}
+/* перерождение, приложения, магазин, коллекция */
+TABS.push(["Популярность","star"],["Магазин","cart"],["Коллекция","games"]);I.star='<path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"/>';I.chev='<path d="M9 6l6 6-6 6"/>';
+const GN=g=>(g.ap?APPT:G)[g.g],RBC=2000000,FAVC=150000,CRI=()=>(S.cr.brand?2:1)*((S.rb||0)>=2?12+(Math.random()*49|0):60+(Math.random()*61|0));
+const APPT=[["Заметки",1,2.2,0],["Погода",2,2.4,0],["Калькулятор",3,2.5,0],["Фоторедактор",5,2.8,2008],["Музыкальный плеер",6,3,2008],["Браузер",8,3.4,2008],["Интернет-магазин",10,3.8,2009],["Мессенджер",12,4,2009],["Навигатор",15,4.2,2010],["Банковское приложение",18,4.6,2012],["Социальная сеть",22,5,2012],["Такси",26,5.4,2013],["Доставка еды",30,5.8,2014],["Видеосервис",35,6.2,2015],["Облачное хранилище",40,6.8,2016],["ИИ-ассистент",45,7.5,2023],["Платформа метавселенной",50,9,2027]];
+const aOk=i=>S.lvl>=APPT[i][1]&&S.y>=APPT[i][3],avis=()=>{const a=APPT.map((_,i)=>i);return a.filter(aOk).concat(a.filter(i=>!aOk(i)).slice(0,3))};
+const APPBTN=()=>(S.rb||0)>=1&&!(S.dev&&S.dev.ready)?`<button class="btn o" style="margin:8px 0 0 8px" ${S.dev?"disabled":""} onclick="openApp()">Создать приложение</button>`:"";
+function openApp(){W={n:"",g:0,ic:0,c:0,o:"v",em:null,img:null,ap:1,sz:1,th:0,au:1,mn:0,ft:[],lg0:0};wizard(true)}
+const lkx=(t,x)=>`<div class="card tut"><div class="big" style="background:var(--soft);color:var(--mt)">${svg("lock",44)}</div><h2>${t}</h2><p>Откроется ${x}.</p></div>`;
+const FAVBTN=g=>(S.rb||0)>=2?(S.fav.includes(g.id)?`<span class="tag">Избранная</span>`:`<button class="btn s" ${S.money<FAVC?"disabled":""} onclick="favBuy(${g.id})">В избранное ${money(FAVC)}</button>`):"";
+function favBuy(id){if(S.money<FAVC||S.fav.includes(id))return;S.money-=FAVC;S.fav.push(id);toast("Игра в избранном: доход ×1,5");draw()}
+const rbCard=()=>`<div class="card"><h3>Перерождение</h3><p class="dim" style="margin:0 0 16px">Перерождений: ${S.rb||0}. Когда накопишь ${money(RBC)}, можно начать заново с постоянным бонусом +10% к доходу и новыми возможностями. Сейчас: ${money(S.money)}.</p><div class="bar" style="margin-bottom:16px"><i style="width:${Math.min(100,S.money/RBC*100)}%"></i></div><button class="btn ${S.money>=RBC?"glow":""}" ${S.money>=RBC?"":"disabled"} onclick="ask('Начать перерождение? Игры, деньги и уровень сбросятся. Сохранятся перерождения, Син коины и скины.',doRebirth)">Переродиться</button></div>`;
+function doRebirth(){if(S.money<RBC)return;if(S.bk&&S.bk.debt>0)S.bk.due=24084+Math.max(0,S.bk.due-ab());const n=Object.assign(def(),{rb:(S.rb||0)+1,sc:(S.sc||0)+Math.floor(S.money/50000)+25,sk:S.sk||[0],th:S.th||0,shop:S.shop,jr:S.jr,tg:S.tg,av:S.av,ai:S.ai,bk:S.bk,ea:S.ea,spu:S.spu,mq:S.mq,rq:S.rq,qh:S.qh,gc:S.gc,tt:S.tt,px:S.px,td:S.td,rr:S.rr,codes:S.codes,df:S.df,sn:S.sn,col:S.col,title:S.title,adm:S.adm,am:S.am,seen:1,spd:S.spd});n.money=500+5000*n.rb;S=n;fix();lastP=0;save();closeM();draw(true);rbPop(n.rb)}
+const RBU={1:["Кнопка «Создать приложение». Приложения приносят больше денег","Раздел «Популярность»: рейтинг и акции","При выпуске остаются только провода"],2:["Избранное: любимая игра приносит в 1,5 раза больше","Суды раз в 1–5 лет, в них 10 вопросов"]};
+function rbPop(n){mgShell(`<div class="tut"><div class="big" style="background:var(--ac)">${svg("up",44)}</div><h2>Перерождение ${n}</h2><p>Постоянный бонус к доходу: +${n*10}%</p><div style="text-align:left;margin-top:16px">${(RBU[n]||["Новые приложения и функции"]).map((x,i)=>`<div class="row" style="animation:up .5s var(--e) ${.15+i*.1}s both"><div class="av">${svg("check",18)}</div><div class="t">${x}</div></div>`).join("")}</div><div class="foot"><button class="btn" onclick="closeM()">Отлично</button></div></div>`,true);conf()}
+const AP=[[8,"Технологии",""],[5,"Работники","l"],[6,"Авторские права","l"],[7,"Автоматизация","l"],[9,"Популярность","1"],[10,"Магазин",""],[11,"Коллекция",""],[12,"Банк","b"],[13,"QR-обмен",""],[14,"Задания",""],[15,"Цели","L5"],[16,"Друзья",""],[17,"Рейтинг студий","L7"],[18,"Лаборатория","L8"],[19,"Офис","L9"],[22,"Языки","L4"],[23,"Статистика",""],[24,"Журнал",""],[25,"Достижения",""]];
+function allPts(f){const lk=k=>k[0]=="L"?(S.lvl<+k.slice(1)?"с "+k.slice(1)+" уровня":""):k=="l"?(S.lvl<10?"с 10 уровня":""):k=="b"?(S.lvl<5&&!(S.rb||0)?"с 5 уровня":""):k?((S.rb||0)<+k?"после "+k+" перерождения":""):"";
+ mgShell(`<div class="sh"><h2>Все пункты</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><div style="margin-top:8px">${AP.map((a,n)=>{const l=lk(a[2]);return `<button class="dn" style="animation:up .5s var(--e) ${n*.06}s both;${l?"opacity:.55":""}" onclick="closeM();go(${a[0]})">${svg(l?"lock":TABS[a[0]][1],22)}<span style="flex:1">${a[1]}</span>${l?`<span class="tag">${l}</span>`:svg("chev",18)}</button>`}).join("")}<button class="dn" onclick="closeM();setTimeout(()=>settings(true),300)">${svg("gear")}<span style="flex:1">Настройки</span></button><button class="dn" onclick="closeM();setTimeout(()=>pixTour('start'),300)">${svg("help")}<span style="flex:1">Обучение</span></button></div>`,f)}
+const pop=g=>Math.min(100,Math.round(g.sc*6+(g.h||0)*.4+(S.fav.includes(g.id)?10:0)));
+function popView(){if((S.rb||0)<1)return lkx("Популярность","после первого перерождения");
+ const L=S.games.slice().sort((a,b)=>pop(b)-pop(a)),P=S.games.filter(g=>(g.h||0)>=40);
+ return `<div class="card"><h3>Рейтинг популярности</h3>${L.length?L.map((g,i)=>`<div class="row" style="animation:up .5s var(--e) ${Math.min(i,8)*.06}s both"><div class="av">${i+1}</div>${ico(g,"m")}<div class="t"><b>${esc(g.n)}</b><div class="bar" style="margin-top:6px"><i style="width:${pop(g)}%"></i></div></div><b>${pop(g)}</b></div>`).join(""):`<p class="dim" style="margin:0">Выпусти игру или приложение.</p>`}</div>
+ <div class="card"><h3>Популярные акции</h3>${P.length?P.map((g,i)=>{const c=Math.round(g.inc*2+2000),on=S.pr.some(p=>p.gid==g.id&&p.n[0]=="А");return `<div class="row" style="animation:up .5s var(--e) ${i*.08}s both">${ico(g,"m")}<div class="t"><b>Акция: «${esc(g.n)}»</b><small>Доход +60% на 2 месяца, ажиотаж +10</small></div><button class="btn s" ${on||S.money<c?"disabled":""} onclick="popGo(${g.id},${c})">${on?"Идёт":money(c)}</button></div>`}).join(""):`<p class="dim" style="margin:0">Акции появляются у игр с ажиотажем от 40%.</p>`}</div>`}
+function popGo(id,c){const g=S.games.find(x=>x.id==id);if(!g||S.money<c)return;S.money-=c;S.pr.push({gid:id,n:"Акция: «"+esc(g.n)+"»",left:2,len:2,mul:.6});g.h=Math.min(100,(g.h||0)+10);toast("Акция началась");draw()}
+const VN=["--bg","--card","--ln","--tx","--mt","--ac","--acd","--soft","--ok"];
+const THM=[["Классика",0,"faf9f5 ffffff e8e6dc 1f1e1d 73726c c96442 b05535 f0eee6 2f7d5b"],["Ночь",60,"141413 1f1e1d 33322f f5f4ee a3a199 d97757 c4633f 262624 4caf82"],["Океан",25,"f2f8fc ffffff d5e6f2 12304a 5b7a92 1f7ab8 176296 e4f0f8 2f8f6b"],["Лес",25,"f3f7f1 ffffff d9e5d3 1c2e1f 62786a 3f8a4f 2f6e3d e6efe2 2f8f6b"],["Закат",30,"fdf5f0 ffffff f2dccf 3a1f17 8a6558 e0572b c24521 f8e8df 2f7d5b"],["Сакура",30,"fdf3f6 ffffff f3d8e1 3b1a28 8a5f70 d6457c b8346a f9e6ed 2f7d5b"],["Лаванда",35,"f6f3fc ffffff e1d8f2 27183f 6d5f8a 7a56d6 6340b8 ece6f8 2f7d5b"],["Мята",35,"f1faf7 ffffff d0ece3 10332a 52786d 1fa07f 188267 e0f4ee 1f8f60"],["Золото",45,"fbf7ea fffdf5 eadfb5 33290d 8a7a45 c8960f a67a08 f5edcf 2f7d5b"],["Графит",50,"18191b 222427 383b40 eceef1 9aa0a8 4f8ae8 3f74cc 2a2d31 4caf82"],["Киберпанк",90,"0f0b1a 1a1330 33265c f2eaff a393cc d42a7d b8206a 241a42 2ee6a8"],["Неон",80,"0a0f0d 111a16 1f3a2e e8fff4 8fb8a4 17b865 119652 16241d 2cff9a"],["Космос",100,"0b0e1f 141935 272e5e e8ecff 98a1d6 5f70e8 4a5bd0 1c2247 4caf82"],["Кофе",40,"f7f1ea fffaf4 e6d8c8 2e1f14 7d6652 8a5a35 704526 efe4d6 2f7d5b"],["Вишня",45,"fcf2f2 ffffff f0d3d3 3a1414 8a5757 c0272d a01d23 f8e2e2 2f7d5b"],["Лёд",30,"f4f9fb ffffff d9e8ee 173038 5f808a 2a9dbf 1e809d e4f1f5 2f8f6b"],["Персик",35,"fff6ef ffffff f6dcc8 3d2212 946a50 e07a3a c4632a fbe9da 2f7d5b"],["Изумруд",70,"0d1714 14231e 24433a e6f6ef 8fb5a6 1f9d72 188160 1b2e27 2dbf8c"],["Бордо",75,"1a0f13 26151b 47252f f8e9ee c19aa6 c23d58 a63049 301b23 4caf82"],["Песок",40,"faf5e9 fffdf7 eaddbd 352c14 857648 b8872a a67e28 f3ead1 2f7d5b"],["Радуга",120,"fbf8ff ffffff e6dcf5 241a3a 74679a d03a85 b32c70 f1e9fb 2fa56b"],["Минимал",60,"ffffff fafafa e5e5e5 111111 6b6b6b 111111 000000 f2f2f2 2f7d5b"],["Тёмное золото",110,"15120a 211c10 3d3319 f6efd8 b3a578 b8901c 9c7815 2a2415 4caf82"],["Ультрафиолет",100,"120a1f 1c1230 37265c efe6ff a794cf 7e3fe0 6a30c4 251a40 4caf82"],["Легенда",150,"fff9e8 ffffff f1dca0 2c1d00 8c6d20 d6900a b87a05 fbefc6 2f7d5b"]];
+function applyTheme(){const t=(THM[S.th||0]||THM[0])[2].split(" "),r=document.documentElement.style;VN.forEach((v,i)=>r.setProperty(v,"#"+t[i]))}
+const thP=i=>{const t=THM[i][2].split(" ");return `<div class="tp ${i==24?"legend":""}" style="background:#${t[0]};border-color:#${t[2]}"><i style="background:#${t[5]}"></i><i style="background:#${t[1]};border:1px solid #${t[2]}"></i><i style="background:#${t[7]}"></i></div>`};
+const mh=n=>n>=1e12?(n/1e12).toFixed(1).replace(".0","")+" трлн $":n>=1e9?(n/1e9).toFixed(1).replace(".0","")+" млрд $":n>=1e7?(n/1e6).toFixed(1).replace(".0","")+" млн $":money(n);
+const fmtT=r=>{r=Math.ceil(r/1000);return Math.floor(r/60)+":"+String(r%60).padStart(2,"0")};
+function shopChk(){if(!S.shop||Date.now()-S.shop.t>=6e5){const o=S.sk||[0];S.shop={t:Date.now(),items:shuf(THM.map((_,i)=>i).filter(i=>!o.includes(i))).slice(0,3)}}}
+const SPM=[[6,40],[8,80],[10,150]];
+function spBuy(m){const x=SPM.find(v=>v[0]==m);if(!x||(S.spu||[]).includes(m))return;if((S.sc||0)<x[1])return toast("Не хватает Син коинов");S.sc-=x[1];S.spu=(S.spu||[]).concat(m);toast("Скорость x"+m+" открыта");conf();draw()}
+function skBuy(i){const p=THM[i][1];if((S.sk||[]).includes(i))return;if((S.sc||0)<p)return toast("Не хватает Син коинов");S.sc-=p;S.sk.push(i);toast("Скин куплен: "+THM[i][0]);conf();draw()}
+function shopView(){shopChk();
+ return `<div class="card"><h3>Магазин</h3><div class="st3" style="margin:12px 0 0"><div><b>${S.sc||0}</b><small>Син коины</small></div><div style="grid-column:span 2"><b id="shT">${fmtT(Math.max(0,6e5-(Date.now()-S.shop.t)))}</b><small>До новой витрины</small></div></div><p class="dim" style="margin:12px 0 0">Скины меняют цвета сайта. Три предложения обновляются каждые 10 минут. Монеты дают за каждые 100 000 $ заработанных денег, за перерождения и победы в суде.</p><div class="bar" style="margin-top:12px"><i style="width:${(S.ea||0)/1e3}%"></i></div><small class="dim">До следующей монеты: ${money(1e5-(S.ea||0))}</small></div>
+ ${S.shop.items.length?`<div class="card"><h3>Витрина</h3>${S.shop.items.map((i,n)=>{const own=S.sk.includes(i);return `<div class="row" style="animation:up .55s var(--e) ${n*.12}s both"><div style="width:96px;flex:none">${thP(i)}</div><div class="t"><b>${THM[i][0]}</b><small>${own?"В коллекции":THM[i][1]+" Син коинов"}</small></div>${own?`<span class="tag">Куплено</span>`:`<button class="btn s" ${(S.sc||0)<THM[i][1]?"disabled":""} onclick="skBuy(${i})">Купить</button>`}</div>`}).join("")}</div>`:`<div class="card"><p class="dim" style="margin:0">Все скины собраны.</p></div>`}<div class="card"><h3>Ускорение времени</h3><p class="dim" style="margin:0 0 8px">Постоянное ускорение. Переключается кнопкой скорости наверху.</p>${SPM.map((x,i)=>{const own=(S.spu||[]).includes(x[0]);return `<div class="row" style="animation:up .5s var(--e) ${i*.08}s both"><div class="av">x${x[0]}</div><div class="t"><b>Скорость x${x[0]}</b><small>${own?"Куплено":x[1]+" Син коинов"}</small></div>${own?`<span class="tag">Куплено</span>`:`<button class="btn s" ${(S.sc||0)<x[1]?"disabled":""} onclick="spBuy(${x[0]})">Купить</button>`}</div>`}).join("")}</div>
+ <div class="card"><h3>Купить Син коины</h3><p class="dim" style="margin:0 0 12px">Монеты получают за выполнение заданий. Нажми «Купить», и ты перейдёшь к заданиям.</p>${[100,550,1200].map(n=>`<div class="row"><div class="t"><b>${n} монет</b><small>Выполни задания, чтобы получить монеты</small></div><button class="btn s" onclick="go(14)">Купить</button></div>`).join("")}</div>`}
+function colView(){
+ return `<div class="card"><h3>Коллекция: ${S.sk.length} из ${THM.length}</h3><p class="dim" style="margin:0">Все темы сайта. Закрытые покупаются в магазине.</p></div><div class="thg">${THM.map((t,i)=>{const own=S.sk.includes(i),on=(S.th||0)==i;return `<div class="thc ${on?"on":""}" style="${own?"":"opacity:.55;"}animation:up .5s var(--e) ${Math.min(i,11)*.04}s both">${thP(i)}<b>${t[0]}</b>${own?`<button class="btn s ${on?"":"o"}" ${on?"disabled":""} onclick="S.th=${i};draw()">${on?"Выбрана":"Выбрать"}</button>`:`<span class="dim">В магазине</span>`}</div>`}).join("")}</div>`}
+/* банк, акции, кредиты */
+TABS.push(["Банк","bank"]);I.bank='<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>';
+const STK=[["ПиксельКорп",120],["ГеймХаб",240],["КиберСофт",90],["Облако Про",310],["НейроЛаб",450],["Звёздные Игры",180],["Турбо Софт",60],["Арена Групп",520]],LNS=[[10000,5],[50000,8],[250000,12],[1000000,18],[5000000,25]];
+const bkInit=()=>{const B=S.bk;if(!B.px){B.px=STK.map(x=>x[1]);B.pv=B.px.slice()}};
+function bkTick(){const B=S.bk;B.dep*=1.015;bkInit();B.pv=B.px.slice();B.px=B.px.map(p=>{let r=Math.random()*.2-.1+.003;if(Math.random()<.04)r+=Math.random()<.5?-.25:.25;return Math.max(5,Math.round(p*(1+r)*100)/100)});
+ if(B.debt>0){const l=B.due-ab();if(l==2)toast("Через 2 месяца нужно вернуть долг банку");if(l<0)bkSeize()}}
+function bkSeize(){const B=S.bk,g=S.games.slice().sort((a,b)=>b.inc-a.inc)[0];B.debt=0;if(!g){S.money=0;toast("Долг не возвращён. Банк забрал все деньги");return}
+ S.games=S.games.filter(x=>x.id!=g.id);S.msgs=S.msgs.filter(m=>m.gid!=g.id);S.ev=S.ev.filter(e=>e.gid!=g.id);S.fav=S.fav.filter(i=>i!=g.id);if(S.dev&&S.dev.upd==g.id)S.dev=null;toast("Долг не возвращён. Банк забрал игру «"+g.n+"»")}
+const bkAmt=()=>Math.max(0,Math.floor(+(($("bkA").value||"")+"").replace(/\s/g,"")||0));
+function bkDep(a){const B=S.bk,v=a=="all"?Math.floor(S.money):bkAmt();if(!v||v>S.money)return toast("Введи сумму, которая у тебя есть");S.money-=v;B.dep+=v;B.n=1;$("bkA").blur();draw()}
+function bkOut(a){const B=S.bk,v=a=="all"?Math.floor(B.dep):bkAmt();if(!v||v>B.dep)return toast("Введи сумму не больше вклада");B.dep-=v;S.money+=v;$("bkA").blur();draw()}
+function bkLoan(i){const B=S.bk,l=LNS[i];if(B.debt>0)return toast("Сначала верни текущий долг");if(S.lvl<l[1])return;B.debt=Math.round(l[0]*1.2);B.due=ab()+12;S.money+=l[0];B.ln=(B.ln||0)+1;toast("Кредит получен. Вернуть "+money(B.debt)+" за 12 месяцев");draw()}
+function bkPay(all){const B=S.bk,v=Math.min(all?B.debt:10000,B.debt,Math.floor(S.money));if(v<=0)return toast("Не хватает денег");S.money-=v;B.debt-=v;if(B.debt<=0){B.debt=0;B.paid=(B.paid||0)+1;toast("Долг погашен")}draw()}
+function stBuy(i,n){const B=S.bk,c=B.px[i]*n;if(S.money<c)return toast("Не хватает денег");S.money-=c;B.hold[i]=(B.hold[i]||0)+n;draw()}
+function stSell(i){const B=S.bk,n=B.hold[i]||0;if(!n)return;S.money+=B.px[i]*n;B.hold[i]=0;draw()}
+function bankView(){if(S.lvl<5&&!(S.rb||0))return lkx("Банк","с 5 уровня");bkInit();const B=S.bk,sv=STK.reduce((a,x,i)=>a+(B.hold[i]||0)*B.px[i],0),l=B.due-ab();
+ return `<div class="card"><h3>Банк</h3><div class="st3" style="margin:12px 0 0"><div><b>${money(B.dep)}</b><small>Вклад</small></div><div><b>${money(B.debt)}</b><small>Долг</small></div><div><b>${money(sv)}</b><small>Акции</small></div></div><p class="dim" style="margin:12px 0 0">Деньги и акции в банке сохраняются при перерождении.</p></div>
+ <div class="card"><h3>Вклад</h3><p class="dim" style="margin:0 0 12px">Вклад растёт на 1,5% каждый месяц.</p><input type="text" id="bkA" inputmode="numeric" placeholder="Сумма"><div class="foot" style="margin-top:12px"><button class="btn" onclick="bkDep()">Положить</button><button class="btn o" onclick="bkOut()">Снять</button></div><div class="foot" style="margin-top:8px"><button class="btn o" onclick="bkDep('all')">Положить всё</button><button class="btn o" onclick="bkOut('all')">Снять всё</button></div></div>
+ <div class="card"><h3>Кредит</h3>${B.debt>0?`<p style="margin:0 0 12px">Нужно вернуть ${money(B.debt)}. Осталось месяцев: ${Math.max(0,l)}. Если не вернуть, банк заберёт самую дорогую игру.</p><div class="bar" style="margin-bottom:16px"><i style="width:${Math.max(0,Math.min(100,(12-l)/12*100))}%"></i></div><div class="foot" style="margin-top:0"><button class="btn o" onclick="bkPay()">Вернуть 10 000</button><button class="btn" onclick="bkPay(1)">Вернуть всё</button></div>`:`<p class="dim" style="margin:0 0 4px">Вернуть нужно на 20% больше за 12 месяцев.</p>`+LNS.map((x,i)=>`<div class="row" style="${S.lvl<x[1]?"opacity:.55;":""}animation:up .5s var(--e) ${i*.06}s both"><div class="t"><b>${money(x[0])}</b><small>${S.lvl<x[1]?"с "+x[1]+" уровня":"вернуть "+money(Math.round(x[0]*1.2))}</small></div><button class="btn s" ${S.lvl<x[1]?"disabled":""} onclick="bkLoan(${i})">Взять</button></div>`).join("")}</div>
+ <div class="card"><h3>Акции</h3>${STK.map((x,i)=>{const p=B.px[i],d=(p/B.pv[i]-1)*100,n=B.hold[i]||0;return `<div class="row" style="animation:up .5s var(--e) ${i*.05}s both"><div class="t"><b>${x[0]}</b><small>${p.toFixed(2)} $ · <span class="chg" style="color:${d>=0?"var(--ok)":"#b3453a"}">${d>=0?"▲":"▼"} ${Math.abs(d).toFixed(1)}%</span> · у тебя ${n}</small><div class="acts" style="margin-top:8px"><button class="btn s" onclick="stBuy(${i},1)">Купить 1</button><button class="btn s o" onclick="stBuy(${i},10)">Купить 10</button><button class="btn s o" ${n?"":"disabled"} onclick="stSell(${i})">Продать всё</button></div></div></div>`}).join("")}</div>`}
+const appCard=()=>(S.rb||0)>=1?`<div class="card hero"><h2>Создать приложение</h2><p>Приложения приносят в несколько раз больше игр: заметки, браузер, интернет-магазин, мессенджер и другие.</p><button class="btn ${S.dev?"":"glow"}" ${S.dev?"disabled":""} onclick="openApp()">${svg("plus",20)}Создать приложение</button></div>`:"";
+/* ещё контент */
+G.push(["Космический фермер",32,3.6],["Мир динозавров",35,3.8],["Школа магов",38,4],["Кибер-тир",41,4.2],["Подземелья",44,4.4],["Гонки будущего",47,4.7],["Лавка чудес",50,5],["Остров пиратов",54,5.3],["Нейро-квест",58,5.7],["Симулятор студии",62,6],["Эпоха драконов",66,6.4],["Игра-вселенная",70,7]);
+APPT.push(["Умный дом",55,10,2025],["Видеозвонки",58,10.5,2020],["Фитнес-трекер",61,11,2016],["Онлайн-школа",64,11.5,2020],["Электронный кошелёк",68,12,2018],["Платформа будущего",75,14,2030]);
+PT.push(["Волшебный лес",1.2],["Лунная база",1.3],["Старый замок",1.2],["Гоночный город",1.1],["Подводный город",1.2],["Арена роботов",1.3],["Пустыня",1],["Космический порт",1.3]);
+QB.push(["Что такое цитирование?","Использование небольшой части с указанием автора|Копирование всего произведения|Продажа чужой работы",1],["Нужно ли указывать автора при цитировании?","Да, нужно|Нет, никогда|Только для картинок",0],["Что такое соавторство?","Создание произведения несколькими людьми|Кража идеи|Продажа игры",1],["Что такое неустойка?","Штраф за нарушение обязательств|Награда за победу|Название суда",2],["Что делает адвокат?","Защищает интересы клиента|Выносит приговор|Рисует игры",0],["Что такое иск?","Обращение в суд с требованием|Подарок судье|Вид лицензии",1],["Можно ли продавать копии чужой игры?","Нет, без разрешения нельзя|Да, если красиво|Только онлайн",0],["Что такое судебное решение?","Итог рассмотрения дела|Начало игры|Название закона",1],["Что такое открытая лицензия?","Заранее разрешённые условия использования|Запрет любых копий|Секретный код",2],["Что такое право на имя?","Право автора указывать своё имя|Право менять чужие названия|Право на любую игру",2]);
+AC.push(["Первый вклад",()=>S.bk.n>0],["Вклад 100 000 $",()=>S.bk.dep>=1e5],["Миллионер в банке",()=>S.bk.dep>=1e6],["Взял кредит",()=>(S.bk.ln||0)>0],["Вернул кредит",()=>(S.bk.paid||0)>0],["Первые акции",()=>Object.values(S.bk.hold).some(v=>v>0)],["Первый скин",()=>S.sk.length>1],["Пять скинов",()=>S.sk.length>=5],["Вся коллекция",()=>S.sk.length>=25],["Первое приложение",()=>S.games.some(g=>g.ap)],["Три перерождения",()=>(S.rb||0)>=3]);
+/* QR-обмен: деньги и игры */
+TABS.push(["QR-обмен","qr"]);I.qr='<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18v3h3"/>';
+const qrSum=t=>{let h=5381;t="gdq"+t;for(let i=0;i<t.length;i++)h=(h*33^t.charCodeAt(i))>>>0;return h.toString(36)};
+const qrPack=o=>{o.id=Math.random().toString(36).slice(2,10);const k=qrSum(JSON.stringify(o));o.k=k;return "GDQ1."+btoa(unescape(encodeURIComponent(JSON.stringify(o))))};
+function qrView(){return `<div class="card"><h3>QR-обмен</h3><p class="dim" style="margin:0">Отправь другу деньги или игру в виде QR-кода. С тебя они списываются сразу, а друг получает их, когда отсканирует код. На каждом устройстве код срабатывает один раз.</p></div>
+ <div class="card"><h3>Отправить деньги</h3><input type="text" id="qa" inputmode="numeric" placeholder="Сумма, например 50000"><div class="foot"><button class="btn" onclick="qrSendM()">Создать QR</button></div></div>
+ <div class="card"><h3>Отправить игру</h3>${S.games.length?S.games.map(g=>`<div class="row">${ico(g)}<div class="t"><b>${esc(g.n)}</b><small>${g.pl?"Игры с платформой передавать нельзя":"Оценка "+g.sc}</small></div><button class="btn s" ${g.pl?"disabled":""} onclick="qrSendG(${g.id})">Отправить</button></div>`).join(""):`<p class="dim" style="margin:0">Сначала выпусти игру.</p>`}</div>
+ <div class="card"><h3>Получить</h3><div class="foot" style="margin-top:0"><button class="btn" onclick="qrScan()">Сканировать</button><label class="btn o" style="margin:0">Фото с QR<input type="file" accept="image/*" hidden onchange="qrPhoto(this)"></label></div><textarea id="qt2" rows="2" placeholder="Или вставь код текстом" style="margin-top:12px"></textarea><div class="foot"><button class="btn o" onclick="qrRecv($('qt2').value)">Получить</button></div></div>
+ ${S.qh.length?`<div class="card"><h3>Отправленные коды</h3>${S.qh.map((h,i)=>`<div class="row" style="animation:up .5s var(--e) ${Math.min(i,8)*.05}s both"><div class="t"><b>${esc(h.txt)}</b><small>${new Date(h.d).toLocaleDateString("ru-RU")}</small></div><button class="btn s o" onclick="qrShow(S.qh[${i}].p,S.qh[${i}].txt)">Показать</button></div>`).join("")}</div>`:""}`}
+function qrShow(p,t){mgShell(`<div class="sh"><h2>QR-код</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0 0">${esc(t)}. Покажи код другу или отправь текст ниже.</p><div id="qr"></div><div class="dim" id="qm"></div><textarea id="qcode" rows="3" readonly onclick="this.select()">${p}</textarea><div class="foot"><button class="btn o" onclick="qrDl()">Скачать QR</button><button class="btn" onclick="qrCp()">Скопировать код</button></div>`,true);
+ qrLib(()=>{const b=$("qr");b.innerHTML="";try{new QRCode(b,{text:p,width:220,height:220,colorDark:"#1f1e1d",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.L});an(b,"pop")}catch(e){$("qm").textContent="Код слишком длинный для QR. Отправь текст"}})}
+function qrCp(){const e=$("qcode"),f=()=>{try{e.select();document.execCommand("copy");toast("Код скопирован")}catch(x){toast("Выдели текст и скопируй вручную")}};try{navigator.clipboard.writeText(e.value).then(()=>toast("Код скопирован"),f)}catch(x){f()}}
+function qrSendM(){const a=Math.floor(+(($("qa").value||"")+"").replace(/\s/g,"")||0);if(a<100)return toast("Минимальная сумма: 100 $");if(a>S.money)return toast("Не хватает денег");
+ ask("С тебя спишется "+money(a)+" сразу. Если код не отсканируют, деньги пропадут. Создать QR?",()=>{S.money-=a;qrKeep(qrPack({v:1,t:"m",a}),"Деньги: "+money(a))})}
+function qrSendG(id){const g=S.games.find(x=>x.id==id);if(!g||g.pl)return;if(S.dev&&S.dev.upd==id)return toast("Сначала закончи обновление этой игры");
+ ask("Игра «"+esc(g.n)+"» исчезнет у тебя и будет только в QR. Создать QR?",()=>{S.games=S.games.filter(x=>x.id!=id);S.msgs=S.msgs.filter(m=>m.gid!=id);S.ev=S.ev.filter(e=>e.gid!=id);S.fav=S.fav.filter(i=>i!=id);S.au.g=S.au.g.filter(i=>i!=id);S.pr=S.pr.filter(p=>p.gid!=id);
+  qrKeep(qrPack({v:1,t:"g",x:{n:g.n,g:g.g,ap:g.ap?1:0,ic:g.ic,c:g.c,em:g.em||null,o:g.o,sc:g.sc,inc:Math.round(g.inc),vr:g.v||1}}),"Игра: "+g.n)})}
+function qrKeep(p,txt){const id=JSON.parse(decodeURIComponent(escape(atob(p.slice(5))))).id;S.mq.push(id);S.qh.unshift({id,txt,p,d:Date.now()});S.qh=S.qh.slice(0,12);save();draw();qrShow(p,txt)}
+const qrRec=id=>{S.rq.push(id);if(S.rq.length>300)S.rq.shift()};
+function qrRecv(t){t=(t||"").trim();if(!t)return toast("Вставь код");let o;
+ try{o=JSON.parse(decodeURIComponent(escape(atob(t.replace(/^GDQ1\./,"").replace(/\s+/g,"")))))}catch(e){return toast("Это не код обмена")}
+ const k=o&&o.k;if(!o||o.v!=1)return toast("Это не код обмена");delete o.k;if(k!==qrSum(JSON.stringify(o)))return toast("Код повреждён или изменён");
+ if(S.rq.includes(o.id))return toast("Этот код уже использован");if(S.mq.includes(o.id)&&!S.am)return toast("Свой код нельзя получить самому");
+ if(o.t=="m"){const a=Math.floor(+o.a);if(!(a>=100&&a<=1e9))return toast("Код повреждён");S.money+=a;qrRec(o.id);toast("Получено "+money(a))}
+ else if(o.t=="g"){const x=o.x||{};if(!(x.ap?APPT:G)[x.g|0])return toast("Код повреждён");
+  const g={id:Date.now()+Math.random(),n:String(x.n||"Игра").slice(0,24),ic:(x.ic|0)%IC.length,c:(x.c|0)%8,em:x.em?String(x.em).slice(0,4):null,img:null,g:x.g|0,ap:x.ap?1:0,o:x.o=="h"?"h":"v",sc:Math.max(1,Math.min(10,+x.sc||5)),inc:Math.max(0,Math.min(5e7,+x.inc||0)),v:Math.max(1,x.vr|0),y:S.y,cd:0,h:10,a:snap()};g.rv=genRev(g,3);S.games.unshift(g);qrRec(o.id);toast("Получена игра «"+g.n+"»")}
+ else return toast("Неизвестный код");
+ save();closeM();draw(true)}
+const QRD=()=>window.BarcodeDetector?new BarcodeDetector({formats:["qr_code"]}):null;
+function jsqrLib(cb){if(QRD()||window.jsQR)return cb();const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js";e.onload=cb;e.onerror=()=>toast("Для сканирования нужен интернет. Вставь код текстом");document.head.appendChild(e)}
+async function qrDec(src,w,h){const d=QRD();if(d){try{const r=await d.detect(src);if(r.length)return r[0].rawValue}catch(e){}}if(window.jsQR){const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(src,0,0,w,h);const q=jsQR(x.getImageData(0,0,w,h).data,w,h);return q?q.data:null}return null}
+function qrScan(){mgShell(`<div class="sh"><h2>Сканер</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p class="dim" style="margin:8px 0">Наведи камеру на QR-код друга.</p><video id="qv" playsinline muted style="width:100%;border-radius:18px;background:#000;margin-top:12px"></video>`,true);
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return toast("Камера недоступна. Выбери фото или вставь код");
+ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(st=>{MG={k:"q",st};const m=MG,v=$("qv");v.srcObject=st;v.play();jsqrLib(()=>{const lp=async()=>{if(MG!=m)return;if(v.videoWidth){const t=await qrDec(v,v.videoWidth,v.videoHeight);if(t&&MG==m){qrRecv(t);return setTimeout(lp,2500)}}setTimeout(lp,250)};lp()})}).catch(()=>toast("Нет доступа к камере. Выбери фото или вставь код"))}
+function qrPhoto(el){const f=el.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);const go=async()=>{const t=await qrDec(c,w,h);t?qrRecv(t):toast("QR на фото не найден")};jsqrLib(go)};im.src=URL.createObjectURL(f)}
+/* Пикс, задания, решения, цели, друзья, рейтинг, лаборатория, офис */
+TABS.push(["Задания","tasks"],["Цели","flag"],["Друзья","users"],["Рейтинг студий","trophy"],["Лаборатория","flask"],["Офис","building"]);
+Object.assign(I,{tasks:'<path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v2a3 3 0 0 0 3 3M16 6h4v2a3 3 0 0 1-3 3M12 13v4M8 21h8M10 17h4"/>',flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/>',building:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>'});
+Object.assign(SP,{5:"Новый пункт меню: Цели",6:"Новый пункт меню: Друзья и совместная игра",7:"Новый пункт меню: Рейтинг студий",8:"Новый пункт меню: Лаборатория",9:"Новый пункт меню: Офис"});
+Object.assign(PROMO,{"ПИКСИК":{m:7000},"КУБИК":{xp:200},"ГЛАЗКИ":{sc:15},"СЕКРЕТ":{m:12000},"ТИХО":{sc:25},"ПИКСМАСТЕР":{m:20000,xp:300}});
+const NLV={15:5,16:6,17:7,18:8,19:9},tabOpen=i=>i>=5&&i<=7?S.lvl>=10:i==12?S.lvl>=5||(S.rb||0)>0:i==9?(S.rb||0)>=1:NLV[i]?S.lvl>=NLV[i]:true;
+/* Пикс */
+const PXR=[["art","графикой","Художника"],["snd","звуком","Звукорежиссёра"],["qa","багами","Тестировщика"],["des","геймплеем","Геймдизайнера"]],PXS=["ПИКСИК","КУБИК","ГЛАЗКИ","СЕКРЕТ","ТИХО","ПИКСМАСТЕР"];
+const PXG=["Заглядывай в «События»: подарки и ивенты растят ажиотаж.","Читай отзывы со звёздами: в них написано, кого нанимать.","Деньги в банке растут. Загляни в «Банк».","Перед выпуском хорошо иметь тестировщика.","Игры с пятью звёздами можно превратить в платформу.","В «Все пункты» много интересного. Загляни!","Решения во время игры могут принести много опыта."];
+function pixAdvice(){const d=S.dev;
+ if(!S.games.length&&!d)return "Нажми «Создать игру» на вкладке «Студия», выбери жанр и название.";
+ if(d&&d.ready)return "Игра готова! Нажми «Опубликовать» в «Студии» и пройди головоломку.";
+ const rq=S.msgs.map(m=>S.games.find(g=>g.id==m.gid)).find(Boolean);if(rq&&!d)return "Сообщество ждёт обновление «"+rq.n+"». Лучше обновить её первой!";
+ for(const g of S.games){const r=PXR.find(r=>g.a&&(g.a[r[0]]||0)==0&&ST.some(x=>x[0]==r[0]&&S.lvl>=x[3]));if(r)return "В «"+g.n+"» игроки недовольны "+r[1]+". Найми "+r[2]+" во вкладке «Команда».";}
+ const w=S.games.filter(g=>(g.cd||0)>=6).sort((a,b)=>a.sc-b.sc)[0];if(w&&!d)return "Лучше обновить «"+w.n+"»: оценка "+w.sc+", игре нужно свежее обновление.";
+ if(S.money>=RBC)return "Хватает денег на перерождение! Загляни в «Профиль».";
+ const c=S.games.find(g=>(g.h||0)<20);if(c&&S.money>1000)return "У «"+c.n+"» мало ажиотажа. Запусти подарок или событие во вкладке «События».";
+ if(!d)return "Пора начать новую игру. Новые жанры открываются с уровнем.";
+ return pk(PXG)}
+function pixHint(){const m=MG;if(!m)return null;
+ if(m.k=="w"){const c=[0,1,2,3].find(x=>!m.done.includes(x));if(c!=null){m.done.push(c);m.last=c;m.sel=null;wireDraw();if(m.done.length==4)setTimeout(()=>mgWin(0),900);return "Соединил один провод за тебя. Цвета должны совпадать."}}
+ if(m.k=="m"){const a=m.c.findIndex(c=>!c.f);if(a>=0){const b=m.c.findIndex((c,i)=>i!=a&&!c.f&&c.v==m.c[a].v);m.c[a].f=m.c[b].f=1;m.sel=[];m.c.forEach(c=>{if(!c.f)c.o=0});m.lock=0;memDraw();if(m.c.every(c=>c.f))setTimeout(()=>mgWin(0),700);return "Открыл одну пару. Запоминай места."}}
+ if(m.k=="o"){m.hl=m.nx;ordDraw();setTimeout(()=>{if(MG==m){m.hl=0;ordDraw()}},1500);return "Следующее число подсвечено."}
+ if(m.k=="s"){if(m.show)return "Смотри внимательно.";simPlay();return "Показываю последовательность ещё раз."}
+ if(m.k=="a"){m.hl=m.r;mathDraw();return "Правильный ответ подсвечен."}
+ if(m.k=="t"){m.sp*=.6;return "Замедлил маркер. Жми «Стоп» в зелёной зоне."}
+ if(m.k=="b")return "Баги исчезают быстро. Смотри на клетку и жми сразу.";
+ if(m.k=="p8")return "Двигай плитки в пустую клетку. Сначала собери верхний ряд.";
+ if(m.k=="p"){const h=m.fs.hint;return h?"Файл лежит в папке «"+h[0]+"», внутри «"+h[1]+"».":"Ищи среди системных папок."}
+ if(m.k=="c")return "Читай вопрос внимательно. Лишние слова часто подсказывают ответ.";
+ return null}
+const pixCube=()=>`<button class="pxc" onclick="pixTap()" aria-label="Пикс"><i></i><i></i><b></b></button>`;
+let pxT=0,pxI=0,PXT=null;
+function pixHide(){clearTimeout(pxT);clearInterval(pxI);$("pix").innerHTML=pixCube()}
+function pixSay(t,btns){const p=$("pix");clearTimeout(pxT);clearInterval(pxI);
+ p.innerHTML=`<div class="pxb"><span id="pxt"></span>${btns?`<div class="foot">${btns.map(x=>`<button class="btn ${x[2]||""}" onclick="${x[1]}">${x[0]}</button>`).join("")}</div>`:""}</div>`+pixCube();
+ const el=$("pxt"),c=p.querySelector(".pxc");let i=0;c.classList.add("talk");pxI=setInterval(()=>{el.textContent=t.slice(0,++i);if(i>=t.length){clearInterval(pxI);c.classList.remove("talk")}},14);if(!btns)pxT=setTimeout(pixHide,9000)}
+function pixTap(){if(PXT)return pixNext();const h=MG?pixHint():null;S.px=(S.px||0)+1;let t;
+ if(S.px%10==0){const c=PXS.find(x=>!S.codes.includes(x));t=c?"Шшш... Секретный промокод: "+c+". Введи его в «Настройках».":pixAdvice()}else t=h||pixAdvice();pixSay(t)}
+const TOURS={start:[["#main .hero .btn","Привет! Я Пикс, твой помощник. Нажми «Создать игру», чтобы начать."],["#bar","Внизу главные вкладки. Остальные пункты открываются кнопкой меню слева сверху."],["#spd","Здесь меняется скорость времени. Месяц идёт минуту, но можно ускорять."],["#pix .pxc","А меня можно нажать, когда не знаешь, что делать. Я подскажу и помогу с головоломками!"]],
+ 1:[["#main .card","Здесь нанимают сотрудников. Они ускоряют работу и улучшают игры. Места растут с уровнем."]],2:[["#main .card","Здесь все твои игры. «Отзывы» и «Обновить» ведут к главному: слушай игроков."]],3:[["#main .card","События растят ажиотаж. Начни с подарка, остальное откроется с уровнем."]],
+ 5:[["#main .card","Улучшай команду: у каждой роли до 5 уровней, каждый даёт +25% к вкладу."]],6:[["#main .card","Иногда чужие студии берут твоих персонажей. Можно зарегистрировать права, нанять адвоката или идти в суд."]],7:[["#main .card","Автоматизация сама обновляет до трёх игр. Продвижение в интернете растит доход."]],
+ 8:[["#main .card","Технологии открываются с годами и дают постоянные бонусы."]],9:[["#main .card","Здесь рейтинг популярности и акции для игр с высоким ажиотажем."]],10:[["#main .card","В магазине скины сайта и ускорение времени. Монеты дают за задания."]],11:[["#main .card","Коллекция: все скины сайта. Выбирай любой из купленных."]],
+ 12:[["#main .card","Банк: вклад растёт, кредит можно взять, но если не вернёшь, потеряешь игру."]],13:[["#main .card","Отправляй деньги и игры друзьям в виде QR-кода."]],14:[["#main .card:nth-child(2)","Проходи короткие игры и получай Син коины. Никакого скучного фарма."]],
+ 15:[["#main .card","Цели ведут тебя по игре. Выполнил, забирай награду."]],16:[["#main .card","Здесь можно управлять студией вдвоём с другом."]],17:[["#main .card","Соревнуйся с другими студиями. За высокие места дают награды."]],18:[["#main .card","В лаборатории рождаются идеи. Они улучшат твою следующую игру."]],19:[["#main .card","Растущий офис даёт места для сотрудников и ускоряет работу."]]};
+function pixTour(k){const s=TOURS[k];if(!s)return;PXT={k,i:0,s};if(k=="start"){S.seen=1;save()}pixStep()}
+function pixStep(){document.querySelectorAll(".hl").forEach(e=>e.classList.remove("hl"));const st=PXT.s[PXT.i],l=PXT.i==PXT.s.length-1,e=document.querySelector(st[0]);if(e){e.classList.add("hl");try{e.scrollIntoView({block:"center",behavior:"smooth"})}catch(x){}}pixSay(st[1],[[l?"Понятно":"Дальше","pixNext()"],["Пропустить","pixEnd()","o"]])}
+function pixNext(){if(!PXT)return;PXT.i++;if(PXT.i>=PXT.s.length)return pixEnd();pixStep()}
+function pixEnd(){document.querySelectorAll(".hl").forEach(e=>e.classList.remove("hl"));PXT=null;pixHide()}
+function pixTab(i){S.tt=S.tt||[];if(TOURS[i]&&tabOpen(i)&&!S.tt.includes(i)&&!PXT){S.tt.push(i);setTimeout(()=>pixTour(i),700)}}
+/* задания за монеты */
+const TSK=[["Поймай баги",bugGame,2,5],["Найди пары",memGame,2,5],["Числа по порядку",ordGame,2,4],["Быстрый счёт",mathGame,3,6],["Остановка в зоне",timeGame,3,6],["Повтори сигнал",simGame,4,8],["Пятнашки",slideGame,4,8],["Провода",wireGame,3,6]];
+let CTK=null;
+function tskView(){return `<div class="card"><h3>Задания</h3><p class="dim" style="margin:0">Проходи короткие игры и получай Син коины. Каждое задание обновляется через несколько минут. Баланс монет виден в магазине.</p></div><div class="card">${TSK.map((x,i)=>{const w=Math.max(0,(S.td[i]||0)-Date.now());return `<div class="row" style="animation:up .5s var(--e) ${i*.05}s both"><div class="av">${svg("tasks",20)}</div><div class="t"><b>${x[0]}</b><small>${w?"Будет доступно через "+fmtT(w):"Награда: "+x[2]+" Син коина"}</small></div><button class="btn s" ${w?"disabled":""} onclick="tskGo(${i})">Начать</button></div>`}).join("")}</div>`}
+function tskGo(i){if((S.td[i]||0)>Date.now())return;CTK={i,r:TSK[i][2],c:TSK[i][3]};TSK[i][1]()}
+/* решения во время игры */
+const DEC=[["Инвестор","К тебе пришёл инвестор с предложением.",["Взять деньги",2000,0,0,0],["Отказаться и сохранить идею",0,40,0,0],["Попросить больше",5000,0,0,0,.5]],
+["Баг перед релизом","Тестеры нашли странный баг.",["Исправить срочно",-500,30,0,.2],["Выпустить как есть",0,0,0,-.2],["Сделать из бага фишку",0,20,15,0,.6]],
+["Блогер","Блогер хочет сыграть в твою игру.",["Отправить копию",0,20,20,0],["Заплатить за обзор",-1000,0,35,0],["Не отвечать",0,5,0,0]],
+["Конкурент","Конкурент выпустил похожую игру.",["Ответить рекламой",-800,0,20,0],["Улучшить свою игру",0,50,0,.2],["Не обращать внимания",0,10,0,0]],
+["Подарок игрокам","Игроки просят бонус.",["Раздать подарки",-300,0,25,0],["Сделать скидку",-500,20,15,0],["Отказать",0,0,-10,0]],
+["Идея ночью","Тебе пришла гениальная идея.",["Записать и развить",0,60,0,0],["Реализовать срочно",-600,0,0,.3],["Лечь спать",0,10,0,0]],
+["Премия","Студию номинировали на премию.",["Поехать на церемонию",-700,40,25,0],["Отправить видеообращение",0,25,10,0],["Отказаться",0,5,0,0]],
+["Утечка","В сеть попали материалы игры.",["Раскрутить это",0,20,20,0,.6],["Удалить везде",-400,0,0,0],["Подать жалобу",-200,30,0,0]],
+["Турнир школьников","Школьники устроили турнир по твоей игре.",["Поддержать призами",-600,30,30,0],["Помочь советами",0,40,10,0]],
+["Новый инструмент","Вышел удобный инструмент для разработки.",["Купить",-1200,0,0,.3],["Изучить бесплатные аналоги",0,50,0,.1],["Остаться на старом",0,5,0,0]],
+["Фанатское видео","Фанаты сняли ролик про твою игру.",["Поделиться им",0,10,30,0],["Пригласить фанатов в студию",-500,40,20,0]],
+["Проверка","К студии пришла проверка.",["Всё оформить честно",-800,40,0,0],["Нанять юриста",-1500,60,0,0],["Тянуть время",-2500,0,0,0,.4]],
+["Стрим","Известный стример предлагает прямой эфир.",["Согласиться бесплатно",0,20,25,0],["Заплатить за рекламу",-900,0,40,0],["Отказаться",0,5,0,0]],
+["Сложная задача","Команда застряла на трудной задаче.",["Выделить больше времени",-400,50,0,.2],["Позвать консультанта",-1000,80,0,0],["Упростить задачу",0,15,0,-.1]],
+["Конференция","Тебя приглашают на конференцию разработчиков.",["Выступить с докладом",-600,70,20,0],["Просто посетить",-200,35,5,0]],
+["Скандал","В соцсетях спорят о твоей игре.",["Ответить спокойно",0,30,10,0],["Промолчать",0,0,-5,0],["Раскрутить спор",0,0,25,0,.5]],
+["Неожиданный хит","Один старый проект вдруг стал популярным.",["Поддержать его обновлением",-500,30,35,.2],["Просто порадоваться",0,20,10,0]],
+["Грант","Можно подать заявку на грант.",["Подать заявку",-300,0,0,0],["Подготовиться тщательно",-800,40,0,0,.7],["Пропустить",0,5,0,0]]];
+function decTick(){if(S.nx==null)S.nx=ab()+1;if(ab()<S.nx||document.querySelector(".modal")||PXT)return;S.nx=ab()+3+(Math.random()*4|0);decShow(Math.random()*DEC.length|0)}
+function decShow(k){const e=DEC[k];mgShell(`<div class="tut" style="padding-top:8px"><div class="big" style="background:var(--ac)">${svg("flag",44)}</div><h2>${e[0]}</h2><p>${e[1]}</p><div style="margin-top:16px">${e.slice(2).map((o,i)=>`<button class="opt" style="display:block;width:100%;margin-bottom:8px;animation:up .45s var(--e) ${.1+i*.08}s both" onclick="decPick(${k},${i})">${o[0]}</button>`).join("")}</div></div>`,true)}
+function decPick(k,i){const o=DEC[k][i+2],p=o[5]==null?1:o[5],ok=Math.random()<=p,f=1+S.lvl*.4;let m=Math.round(o[1]*f),x=Math.round(o[2]*(1+S.lvl*.1)),h=o[3],sc=o[4];if(!ok){m=-Math.abs(Math.round(o[1]*f/2));x=0;h=0;sc=0}
+ const g=S.games.length?pk(S.games):null,t=[];if(m){S.money=Math.max(0,S.money+m);t.push((m>0?"+":"")+money(m))}if(x){addXp(x);t.push("+"+x+" опыта")}if(g&&h){g.h=Math.max(0,Math.min(100,(g.h||0)+h));t.push("ажиотаж «"+g.n+"» "+(h>0?"+":"")+h)}if(g&&sc){g.sc=Math.max(1,Math.min(10,+(g.sc+sc).toFixed(1)));t.push("оценка «"+g.n+"» "+(sc>0?"+":"")+sc)}
+ mgShell(`<div class="tut" style="padding-top:8px"><div class="big" style="background:${ok?"var(--ok)":"#b3453a"}">${svg(ok?"check":"x",44)}</div><h2>${ok?"Удачно":"Не повезло"}</h2><p>${t.length?esc(t.join(", ")):"Ничего не изменилось"}</p><div class="foot"><button class="btn" onclick="closeM();draw()">Дальше</button></div></div>`);if(ok&&(m>0||h>0))conf()}
+/* цели */
+const GL=[["Выпусти первую игру",()=>S.games.length>=1,500,30],["Получи оценку 5 из 10",()=>S.games.some(g=>g.sc>=5),800,40],["Найми 3 сотрудников",()=>hc()>=3,1000,50],["Выпусти 3 игры",()=>S.games.length>=3,1500,60],["Достигни 5 уровня",()=>S.lvl>=5,2000,80],["Обнови любую игру",()=>S.games.some(g=>g.v>1),2500,90],["Проведи событие",()=>S.res.length>0,3000,100],["Получи оценку 8",()=>S.games.some(g=>g.sc>=8),5000,120],["Накопи 50 000 $",()=>S.money>=5e4,6000,140],["Достигни 10 уровня",()=>S.lvl>=10,10000,200],["Изучи технологию",()=>Object.keys(S.tech).length>0,8000,150],["Выпусти 8 игр",()=>S.games.length>=8,15000,250],["Получи оценку 10",()=>S.games.some(g=>g.sc>=10),30000,400],["Накопи 1 000 000 $",()=>S.money>=1e6,50000,500],["Построй платформу",()=>S.games.some(g=>g.pl),60000,600],["Выиграй суд",()=>S.cr.w>0,40000,500],["Улучши офис до 3 уровня",()=>(S.of||0)>=3,30000,300],["Накопи 10 000 000 $",()=>S.money>=1e7,200000,900]];
+function goalView(){if(S.lvl<5)return lkx("Цели","с 5 уровня");const a=GL.map((_,i)=>i).filter(i=>!S.gc.includes(i)).slice(0,3);
+ return `<div class="card"><h3>Цели: ${S.gc.length} из ${GL.length}</h3><div class="bar" style="margin-top:12px"><i style="width:${S.gc.length/GL.length*100}%"></i></div></div><div class="card"><h3>Сейчас</h3>${a.length?a.map((i,n)=>{const g=GL[i],ok=g[1]();return `<div class="row" style="animation:up .5s var(--e) ${n*.08}s both"><div class="av" style="${ok?"background:var(--ok);color:#fff":""}">${svg(ok?"check":"flag",20)}</div><div class="t"><b>${g[0]}</b><small>Награда: ${money(g[2])} и ${g[3]} опыта</small></div><button class="btn s" ${ok?"":"disabled"} onclick="goalGet(${i})">Забрать</button></div>`}).join(""):`<p class="dim" style="margin:0">Все цели выполнены.</p>`}</div>`}
+function goalGet(i){if(S.gc.includes(i)||!GL[i][1]())return;S.gc.push(i);S.money+=GL[i][2];addXp(GL[i][3]);toast("Награда получена");conf();draw()}
+/* друзья и совместная игра */
+const CO={role:null,pc:null,dc:null,ok:0,buf:{},t:0,l:0,code:"",ad:0,chat:[]},ICE={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
+const sdpEnc=d=>"GDC1."+btoa(unescape(encodeURIComponent(JSON.stringify(d)))),sdpDec=t=>JSON.parse(decodeURIComponent(escape(atob(t.replace(/^GDC1\./,"").replace(/\s+/g,"")))));
+const coWait=pc=>new Promise(r=>{if(pc.iceGatheringState=="complete")return r();pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState=="complete")r()};setTimeout(r,5000)});
+function coBind(dc){CO.dc=dc;dc.onopen=()=>{CO.ok=1;CO.t0=Date.now();CO.sent=0;CO.rx=0;CO.rel0=CO.role=="h"?S.games.length:null;if(CO.role=="h")coSend("s");toast(CO.role=="h"?"Друг подключился":"Подключено к студии друга");coUI()};dc.onclose=()=>{if(CO.ok){CO.ok=0;toast("Друг отключился");if(CO.role=="g")setTimeout(()=>location.reload(),800)}};dc.onmessage=e=>coGot(e.data)}
+async function coHost(){coEnd();const pc=new RTCPeerConnection(ICE);CO.role="h";CO.pc=pc;coBind(pc.createDataChannel("co"));await pc.setLocalDescription(await pc.createOffer());await coWait(pc);CO.code=sdpEnc(pc.localDescription);coUI()}
+async function coJoin(t){try{const pc=new RTCPeerConnection(ICE);CO.role="g";CO.pc=pc;pc.ondatachannel=e=>coBind(e.channel);await pc.setRemoteDescription(sdpDec(t));await pc.setLocalDescription(await pc.createAnswer());await coWait(pc);CO.code=sdpEnc(pc.localDescription);coUI()}catch(e){CO.role=null;toast("Код не подошёл");coUI()}}
+async function coAnswer(t){try{await CO.pc.setRemoteDescription(sdpDec(t));coUI()}catch(e){toast("Ответный код не подошёл")}}
+function coEnd(){const g=CO.role=="g"&&CO.ok;try{CO.dc&&CO.dc.close();CO.pc&&CO.pc.close()}catch(e){}CO.role=null;CO.ok=0;CO.dc=null;CO.pc=null;CO.code="";if(g)location.reload()}
+function coSend(t){if(!CO.ok||!CO.dc||CO.dc.readyState!="open")return;CO.l=Date.now();const j=JSON.stringify({t,s:S}),id=Math.random().toString(36).slice(2),n=Math.ceil(j.length/12000);for(let i=0;i<n;i++)CO.dc.send(JSON.stringify({c:id,i,n,d:j.slice(i*12000,(i+1)*12000)}))}
+function coGot(raw){let m;try{m=JSON.parse(raw)}catch(e){return}if(m.pg!=null){coRaw({pn:m.pg});return}if(m.pn!=null){CO.rtt=Date.now()-m.pn;return}if(m.tb!=null){CO.ftab=m.tb;if(S.tab==16)draw();return}if(m.ch!=null){if(REACT.includes(m.ch)){floatEmoji(m.ch);CO.rx++}CO.chat.push(["Друг",String(m.ch)]);CO.chat=CO.chat.slice(-30);toast("Друг: "+String(m.ch).slice(0,40));if(S.tab==16)draw();return}const b=CO.buf[m.c]=CO.buf[m.c]||{p:[],k:0};b.p[m.i]=m.d;if(++b.k<m.n)return;delete CO.buf[m.c];let o;try{o=JSON.parse(b.p.join(""))}catch(e){return}
+ if((CO.role=="h"&&o.t=="a")||(CO.role=="g"&&o.t=="s"&&Date.now()-CO.t>1500))coAdopt(o.s)}
+function coAdopt(s){const tab=S.tab;CO.ad=1;S=s;fix();S.tab=tab;lastP=0;CO.ad=0;if(CO.rel0==null)CO.rel0=S.games.length;if(CO.role=="h")save();draw()}
+function coUI(){if(document.querySelector("#coBox"))coModal()}
+function coModal(f){const st=CO.ok?"c":CO.role=="h"?"h":CO.role=="g"?"g":"m";
+ mgShell(`<div class="sh"><h2>Совместная игра</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><div id="coBox" style="margin-top:8px">`+(
+ st=="c"?`<p>Подключено. Вы управляете студией вместе: хозяин ведёт время, изменения друга синхронизируются.</p><div class="foot"><button class="btn o" onclick="coEnd();closeM()">Отключиться</button></div>`:
+ st=="h"?(CO.code?`<p class="dim">1. Отправь этот код другу.</p><textarea id="qcode" rows="4" readonly onclick="this.select()">${CO.code}</textarea><div class="foot" style="margin-top:8px"><button class="btn o" onclick="qrCp()">Скопировать</button></div><p class="dim">2. Друг пришлёт ответный код. Вставь его сюда.</p><textarea id="ca" rows="4" placeholder="Ответный код друга"></textarea><div class="foot"><button class="btn" onclick="coAnswer($('ca').value)">Подключить</button></div>`:`<p class="dim">Создаю код…</p>`):
+ st=="g"?(CO.code?`<p class="dim">Отправь этот ответный код хозяину. Когда он вставит его, подключение завершится.</p><textarea id="qcode" rows="4" readonly onclick="this.select()">${CO.code}</textarea><div class="foot"><button class="btn o" onclick="qrCp()">Скопировать</button></div>`:`<p class="dim">Создаю ответ…</p>`):
+ `<p class="dim">Один игрок создаёт комнату и отправляет код, другой подключается по коду. Студия хозяина общая для обоих.</p><div class="foot"><button class="btn" onclick="coHost();coModal()">Создать комнату</button></div><textarea id="cj" rows="4" placeholder="Код комнаты друга" style="margin-top:16px"></textarea><div class="foot"><button class="btn o" onclick="coJoin($('cj').value);coModal()">Подключиться</button></div>`)+`</div>`,f)}
+function frView(){
+ return `<div class="card"><h3>Совместная игра</h3><p class="dim" style="margin:0 0 16px">Управляйте студией вдвоём. Один игрок создаёт комнату, второй подключается по коду. Всё синхронизируется.</p>${CO.ok?`<p style="margin:0 0 12px">Подключено: ${CO.role=="h"?"ты хозяин студии":"ты гость"}${CO.rtt?" · пинг "+CO.rtt+" мс":""}${CO.ftab!=null?" · друг сейчас: "+TABS[CO.ftab][0]:""}. Командный бонус +10% включён.</p><button class="btn o" onclick="coEnd()">Отключиться</button>`:`<button class="btn" onclick="coModal(true)">Создать или подключиться</button>`}</div>${coChatCard()}${tgCard()}<div class="card"><h3>Обмен с друзьями</h3><p class="dim" style="margin:0 0 16px">Отправляй деньги и игры в виде QR-кода.</p><button class="btn o" onclick="go(13)">Открыть QR-обмен</button></div>`}
+/* рейтинг студий */
+const RVL=[["Студия Альфа",3000],["Мега Игры",8000],["ПиксельПро",20000],["Космо Геймс",45000],["Нова",90000],["Зенит Софт",160000],["Квант",300000],["Орбита",520000],["Титан",900000]],RKR=[[5,5],[3,10],[1,25]];
+const myScore=()=>Math.round(S.money/10+S.games.reduce((a,g)=>a+g.inc*10+g.sc*100,0)+S.lvl*500+(S.rb||0)*5000);
+function rkList(){const m=Math.max(0,ab()-24084),r=RVL.map(x=>[x[0],Math.round(x[1]*Math.pow(1.03,m))]);r.push([S.sn+" (ты)",myScore(),1]);return r.sort((a,b)=>b[1]-a[1])}
+function rkView(){if(S.lvl<7)return lkx("Рейтинг студий","с 7 уровня");const L=rkList(),p=L.findIndex(x=>x[2])+1,mx=L[0][1];
+ return `<div class="card"><h3>Твоё место: ${p} из ${L.length}</h3>${RKR.map(r=>{const got=S.rr.includes(r[0]),can=p<=r[0];return `<div class="row"><div class="t"><b>Войти в топ ${r[0]}</b><small>Награда: ${r[1]} Син коинов</small></div>${got?`<span class="tag">Получено</span>`:`<button class="btn s" ${can?"":"disabled"} onclick="rkClaim(${r[0]},${r[1]})">Забрать</button>`}</div>`}).join("")}</div><div class="card"><h3>Рейтинг</h3>${L.map((x,i)=>`<div class="row" style="animation:up .5s var(--e) ${i*.05}s both"><div class="av" ${x[2]?'style="background:var(--ac);color:#fff"':""}>${i+1}</div><div class="t"><b>${esc(x[0])}</b><div class="bar" style="margin-top:6px"><i style="width:${Math.max(2,x[1]/mx*100)}%"></i></div></div><b>${x[1].toLocaleString("ru-RU")}</b></div>`).join("")}</div>`}
+function rkClaim(r,c){if(S.rr.includes(r))return;if(rkList().findIndex(x=>x[2])+1>r)return;S.rr.push(r);S.sc=(S.sc||0)+c;toast("Награда получена");conf();draw()}
+/* лаборатория идей */
+const IDEA=[["Яркий герой",.3,0],["Необычный мир",.3,0],["Забавный сюжет",.4,1],["Крутая механика",.5,1],["Живая музыка",.3,0],["Тайный уровень",.4,1],["Редкий враг",.2,0],["Красивый финал",.3,0],["Командный режим",.4,1],["Секретный режим",.5,2],["Яркие цвета",.2,0],["Эпичный босс",.5,2],["Гениальная идея",.8,2],["Легендарный сюжет",1,3]],RAR=["Обычная","Редкая","Эпическая","Легендарная"];
+const idCost=()=>1000+S.lvl*500,ideaB=()=>{const a=(S.ib||[]).reduce((s,i)=>s+IDEA[i][1],0);S.ib=[];return a};let LB=-1;
+function ideaRoll(){const c=idCost();if(S.ib.length>=5)return toast("Можно хранить не больше 5 идей");if(S.money<c)return toast("Не хватает денег");S.money-=c;const r=Math.random(),t=r<.05?3:r<.2?2:r<.5?1:0,i=IDEA.map((x,j)=>[x,j]).filter(a=>a[0][2]==t).map(a=>a[1]);S.ib.push(pk(i));LB=S.ib.length-1;toast("Новая идея: "+IDEA[S.ib[LB]][0]);draw()}
+function labView(){if(S.lvl<8)return lkx("Лаборатория","с 8 уровня");
+ return `<div class="card"><h3>Лаборатория идей</h3><p class="dim" style="margin:0 0 16px">Придумывай идеи. Все накопленные идеи улучшат твою следующую новую игру. Можно хранить до 5.</p><button class="btn glow" onclick="ideaRoll()">Придумать идею · ${money(idCost())}</button></div><div class="card"><h3>Твои идеи: ${S.ib.length} из 5</h3>${S.ib.length?S.ib.map((i,n)=>`<div class="row" style="${n==LB?"animation:pop .5s var(--e)":""}"><div class="av">${svg("flask",20)}</div><div class="t"><b>${IDEA[i][0]}</b><small>${RAR[IDEA[i][2]]} · качество +${IDEA[i][1]}</small></div></div>`).join(""):`<p class="dim" style="margin:0">Пока нет идей.</p>`}</div>`}
+/* офис */
+const OFC=[["Гараж",0],["Комната",5000],["Небольшой офис",25000],["Этаж в бизнес-центре",120000],["Здание студии",600000],["Небоскрёб",3e6],["Кампус",15e6]];
+function ofUp(){const L=S.of||0,n=OFC[L+1];if(!n||S.money<n[1])return;S.money-=n[1];S.of=L+1;toast("Офис улучшен: "+n[0]);conf();draw()}
+function ofView(){if(S.lvl<9)return lkx("Офис","с 9 уровня");const L=S.of||0,nx=OFC[L+1],f=L+1;
+ const w=Array.from({length:f},(_,r)=>Array.from({length:5},(_,c)=>`<rect x="${58+c*26}" y="${150-(r+1)*22}" width="16" height="12" rx="3" fill="var(--ac)" style="animation:pop .5s var(--e) ${(r*5+c)*.04}s both"/>`).join("")).join("");
+ return `<div class="card"><h3>Офис: ${OFC[L][0]}</h3><svg viewBox="0 0 220 160" style="width:100%;max-width:300px;display:block;margin:12px auto"><rect x="40" y="${156-f*22-6}" width="140" height="${f*22+6}" rx="8" fill="var(--soft)" stroke="var(--ln)"/>${w}<rect x="95" y="136" width="30" height="20" rx="4" fill="var(--ln)"/></svg><p class="dim" style="margin:0">Каждый уровень даёт +3 места для сотрудников и +10% к скорости разработки. Сейчас: +${L*3} мест, +${L*10}%.</p></div><div class="card">${nx?`<h3>Следующий: ${nx[0]}</h3><button class="btn" ${S.money<nx[1]?"disabled":""} onclick="ofUp()">Улучшить за ${money(nx[1])}</button>`:`<p class="dim" style="margin:0">Офис улучшен до максимума.</p>`}</div>`}
+const NEWV={14:tskView,15:goalView,16:frView,17:rkView,18:labView,19:ofView};
+/* защита авторских прав */
+const LWC=[100000,300000,1000000],crRegC=g=>Math.round(g.inc*24+10000);
+function crTools(){const lw=S.cr.lw||0;return `<div class="card"><h3>Защита</h3><div class="row f"><div class="t"><b>Адвокат: уровень ${lw} из 3</b><small>Каждый уровень даёт ещё одну допустимую ошибку в суде</small></div>${lw<3?`<button class="btn s" ${S.money<LWC[lw]?"disabled":""} onclick="crLaw()">${money(LWC[lw])}</button>`:`<span class="tag">Максимум</span>`}</div>${S.games.map(g=>`<div class="row">${ico(g,"m")}<div class="t"><b>${esc(g.n)}</b><small>${g.reg?"Права зарегистрированы":"Права не защищены"}</small></div>${g.reg?`<span class="tag">Под защитой</span>`:`<button class="btn s o" ${S.money<crRegC(g)?"disabled":""} onclick="crReg(${g.id})">${money(crRegC(g))}</button>`}</div>`).join("")}</div>`}
+function crLaw(){const l=S.cr.lw||0;if(l>=3||S.money<LWC[l])return;S.money-=LWC[l];S.cr.lw=l+1;toast("Адвокат нанят");draw()}
+function crReg(id){const g=S.games.find(x=>x.id==id);if(!g||g.reg||S.money<crRegC(g))return;S.money-=crRegC(g);g.reg=1;toast("Права зарегистрированы");draw()}
+function crSettle(id){const c=S.cr.c.find(x=>x.id==id),g=c&&S.games.find(x=>x.id==c.gid);if(!c||!g)return;const p=Math.round(g.inc*6+5000);ask("Договориться за "+money(p)+"? Дело закроется без суда.",()=>{if(S.money<p)return toast("Не хватает денег");S.money-=p;c.d=3;closeM();draw()})}
+/* возрождение, ящики, компания, фан-сходки, чат, иконки */
+TABS.push(["—","lock"],["—","lock"]);
+G.push(["Космический цирк",72,7.2],["Пиксельный ужас",75,7.6],["Мир снов",80,8],["Симулятор жизни",85,8.5],["Квантовая стратегия",90,9],["Бесконечная сага",100,10]);
+/* возрождение */
+const VZC=5e7,vzM=()=>(1+3.5*(S.vz||0))*(CO.ok?1.1:1);
+const vzOk=()=>(S.rb||0)>=5&&S.money>=VZC;
+const vzCard=()=>`<div class="card"><h3>Возрождение</h3><p class="dim" style="margin:0 0 16px">Возрождений: ${S.vz||0}. Каждое даёт +350% к доходу и скорости. Нужно 5 перерождений и ${money(VZC)}. Сбрасывается абсолютно всё, даже деньги в банке, скины и Син коины.</p><div class="bar" style="margin-bottom:16px"><i style="width:${Math.min(5,S.rb||0)/5*50+Math.min(1,S.money/VZC)*50}%"></i></div><button class="btn ${vzOk()?"glow":""}" ${vzOk()?"":"disabled"} onclick="ask('Начать возрождение? Сбросится абсолютно всё: деньги, банк, игры, перерождения, скины и Син коины. Останутся только возрождения.',doVz)">Возродиться</button></div>`;
+function doVz(){if(!vzOk())return;const n=Object.assign(def(),{vz:(S.vz||0)+1,sn:S.sn,seen:1,av:S.av,ai:S.ai,tt:S.tt,px:S.px,adm:S.adm,am:S.am,codes:S.codes,df:S.df});n.money=500;S=n;fix();lastP=0;save();closeM();draw(true);
+ mgShell(`<div class="tut"><div class="big" style="background:var(--ac)">${svg("up",44)}</div><h2>Возрождение ${n.vz}</h2><p>Доход и скорость теперь ×${vzM()}</p><div class="foot"><button class="btn" onclick="closeM()">Вперёд</button></div></div>`,true);conf()}
+AC.push(["Первое возрождение",()=>(S.vz||0)>=1],["Три возрождения",()=>(S.vz||0)>=3],["Фан-сходка",()=>S.res.some(r=>r.k[0]=="f")],["Бренд студии",()=>!!S.cr.brand]);
+GL.push(["Проведи фан-сходку",()=>S.res.some(r=>r.k[0]=="f"),25000,300],["Достигни 20 уровня",()=>S.lvl>=20,100000,600],["Выпусти 15 игр",()=>S.games.length>=15,150000,700],["Накопи 100 000 000 $",()=>S.money>=1e8,1000000,1500]);
+DEC.push(["Фанат-художник","Фанат нарисовал арт по игре.",["Купить арт",-400,15,20,0],["Пригласить в команду",-800,50,10,.2],["Поблагодарить",0,15,10,0]],
+["Скидка на сервера","Хостинг предлагает скидку.",["Взять на год",1500,10,0,0],["Отказаться",0,15,0,0]],
+["Новая платформа","Выходит новая платформа для игр.",["Сделать версию заранее",-1500,60,25,.1],["Подождать",0,10,0,0],["Следить за новостями",0,30,5,0]],
+["Корпоратив","Команда просит отдохнуть.",["Устроить праздник",-700,60,0,.1],["Дать выходной",0,40,0,0],["Работать дальше",0,0,0,-.1]],
+["Журналист","Журналист хочет написать о студии.",["Дать интервью",0,40,25,0],["Показать офис",-300,50,15,0],["Отказаться",0,5,0,0]],
+["Подписка","Игроки просят подписку.",["Сделать подписку",-1000,50,0,.2],["Оставить как есть",0,10,0,0]],
+["Взлом","Кто-то пытается взломать игру.",["Усилить защиту",-900,40,0,0],["Не обращать внимания",0,0,-15,0,.4]],
+["Школьная экскурсия","Студенты приходят в студию.",["Провести экскурсию",0,50,15,0],["Дать мастер-класс",-300,80,20,0]],
+["Находка","Ты нашёл старый прототип игры.",["Доработать его",-600,70,10,.2],["Выложить как есть",0,25,20,0]],
+["Бета-тест","Игроки хотят бета-версию.",["Открыть бету",-300,40,30,.2],["Закрытая бета",0,35,10,.1]]);
+/* фан-сходки */
+const FM=[["кафе","парк","клуб","двор","арт-пространство"],["концертный зал","выставочный центр","театр","большой клуб"],["стадион","арена","площадь города","парк аттракционов"]];
+Object.assign(EVK,{f1:{n:"Фан-сходка в маленьком месте",cost:1500,min:5,lvl:5,len:1,mul:.35,hy:18,d:"Встреча с самыми преданными фанатами."},f2:{n:"Фан-сходка в большом зале",cost:20000,min:7,lvl:11,len:2,mul:.9,hy:35,d:"Большая встреча с автограф-сессией."},f3:{n:"Фан-фестиваль",cost:300000,min:9,lvl:17,len:3,mul:2,hy:50,d:"Огромный праздник для тысяч фанатов."}});
+ORD.push("f1","f2","f3");ORD.sort((a,b)=>EVK[a].lvl-EVK[b].lvl);
+/* бренд студии */
+function crBrand(){return `<div class="card"><h3>Бренд студии</h3><div class="row f"><div class="t"><b>Оформить авторское право на бренд</b><small>Доход +5%, дела об авторских правах в два раза реже</small></div>${S.cr.brand?`<span class="tag">Оформлено</span>`:`<button class="btn s" ${S.money<5e5?"disabled":""} onclick="crBr()">${money(5e5)}</button>`}</div></div>`}
+function crBr(){if(S.cr.brand||S.money<5e5)return;S.money-=5e5;S.cr.brand=1;toast("Бренд студии защищён");draw()}
+/* чат с другом */
+function coChatCard(){if(!CO.ok)return "";return `<div class="card"><h3>Чат</h3><div style="max-height:200px;overflow:auto;margin-bottom:12px">${CO.chat.length?CO.chat.slice(-12).map(m=>`<div class="row f" style="padding:6px 0"><div class="t"><small>${m[0]}</small>${esc(m[1])}</div></div>`).join(""):`<p class="dim" style="margin:0">Напиши другу сообщение.</p>`}</div><div class="acts" style="margin:0 0 12px">${["👍","🎉","😂","❤️"].map(e=>`<button class="btn s o" onclick="coSay('${e}')">${e}</button>`).join("")}</div><input type="text" id="cch" maxlength="80" placeholder="Сообщение" onkeydown="if(event.key=='Enter')coSay()"><div class="foot"><button class="btn" onclick="coSay()">Отправить</button></div></div>`}
+function coSay(t){const el=$("cch"),v=(t||(el&&el.value)||"").trim();if(!v||!CO.ok||!CO.dc||CO.dc.readyState!="open")return;CO.dc.send(JSON.stringify({ch:v.slice(0,80)}));if(REACT.includes(v)){floatEmoji(v);CO.rx++}else CO.sent++;CO.chat.push(["Ты",v.slice(0,80)]);CO.chat=CO.chat.slice(-30);if(el)el.value="";draw()}
+/* иконки для Chrome и Safari */
+function iconCanvas(n,v){v=v||0;const c=document.createElement("canvas");c.width=c.height=n;const x=c.getContext("2d"),m=n*.12,w=n-2*m,r=n*.24,D="#2a1a14";x.fillStyle="#faf9f5";x.fillRect(0,0,n,n);
+ x.beginPath();x.moveTo(m+r,m);x.arcTo(m+w,m,m+w,m+w,r);x.arcTo(m+w,m+w,m,m+w,r);x.arcTo(m,m+w,m,m,r);x.arcTo(m,m,m+w,m,r);x.closePath();
+ const g=x.createLinearGradient(0,0,n,n);g.addColorStop(0,"#d4724f");g.addColorStop(1,"#a64a2e");x.fillStyle=g;x.fill();
+ const eye=(k,ry)=>{x.fillStyle=D;x.beginPath();x.ellipse(n*k,n*.45,n*.058,n*(ry||.072),0,0,7);x.fill();x.fillStyle="#fff";x.beginPath();x.arc(n*k-n*.015,n*.45-n*.025,n*.02,0,7);x.fill()};
+ const cheeks=()=>{x.fillStyle="rgba(255,155,176,.85)";[.27,.73].forEach(k=>{x.beginPath();x.ellipse(n*k,n*.58,n*.05,n*.032,0,0,7);x.fill()})};
+ const smile=()=>{x.strokeStyle=D;x.lineWidth=n*.032;x.lineCap="round";x.beginPath();x.arc(n*.5,n*.57,n*.09,.15*Math.PI,.85*Math.PI);x.stroke()};
+ const closed=k=>{x.strokeStyle=D;x.lineWidth=n*.03;x.lineCap="round";x.beginPath();x.arc(n*k,n*.44,n*.055,.1*Math.PI,.9*Math.PI);x.stroke()};
+ const star=(cx,cy,R)=>{x.fillStyle="#ffd93d";x.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?R*.45:R;x.lineTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q)}x.closePath();x.fill()};
+ if(v==1){eye(.37);closed(.63);cheeks();smile()}
+ else if(v==2){eye(.37,.085);eye(.63,.085);cheeks();x.strokeStyle=D;x.lineWidth=n*.03;x.beginPath();x.arc(n*.5,n*.63,n*.04,0,7);x.stroke()}
+ else if(v==3){eye(.37);eye(.63);x.strokeStyle="#fff";x.lineWidth=n*.026;[.37,.63].forEach(k=>{x.beginPath();x.arc(n*k,n*.45,n*.1,0,7);x.stroke()});x.beginPath();x.moveTo(n*.47,n*.45);x.lineTo(n*.53,n*.45);x.stroke();cheeks();smile()}
+ else if(v==4){star(n*.37,n*.45,n*.085);star(n*.63,n*.45,n*.085);cheeks();smile()}
+ else if(v==5){closed(.37);closed(.63);cheeks();x.strokeStyle=D;x.lineWidth=n*.03;x.lineCap="round";x.beginPath();x.moveTo(n*.45,n*.63);x.lineTo(n*.55,n*.63);x.stroke();x.fillStyle="#fff";x.font="bold "+Math.round(n*.12)+"px sans-serif";x.fillText("z",n*.7,n*.3)}
+ else{eye(.37);eye(.63);cheeks();smile()}
+ return c}
+function avUp(el){const f=el.files[0];if(!f)return;const im=new Image();im.onload=()=>{const c=document.createElement("canvas");c.width=c.height=128;const m=Math.min(im.width,im.height);c.getContext("2d").drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,128,128);S.av=c.toDataURL("image/jpeg",.85);save();draw()};im.src=URL.createObjectURL(f)}
+const incM=()=>S.games.reduce((a,g)=>a+g.inc*evMul(g)*lgM(g)*(1+(g.h||0)/100),0);
+function setIcons(){try{const L=(rel,href,sz)=>{let l=document.querySelector('link[rel="'+rel+'"]');if(!l){l=document.createElement("link");l.rel=rel;document.head.appendChild(l)}if(sz)l.sizes=sz;l.href=href};
+ L("icon",iconCanvas(64,S.ai||0).toDataURL());L("apple-touch-icon",iconCanvas(180,S.ai||0).toDataURL(),"180x180");
+ const mf={name:"Создавать игры",short_name:"Игры",start_url:".",display:"standalone",background_color:"#faf9f5",theme_color:"#c96442",icons:[{src:iconCanvas(192,S.ai||0).toDataURL(),sizes:"192x192",type:"image/png"},{src:iconCanvas(512,S.ai||0).toDataURL(),sizes:"512x512",type:"image/png"}]};
+ L("manifest",URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/manifest+json"})))}catch(e){}}
+/* создание игры: масштаб, тема, аудитория, монетизация, функции, платформы */
+const SZ=[["Маленький","Быстрее на 20%, качество чуть ниже",0,.8,-.4,.8],["Средний","Обычный проект",0,1,0,1],["Большой","Дольше на 40%, дороже, выше качество и доход",800,1.4,.8,1.3]];
+const AUD=[["Дети","Стабильный доход",1,0],["Все","Чуть больше дохода",1.15,0],["Взрослые","Больше дохода, выше требования",1.3,-.3]];
+const MON=[["Реклама","Бесплатно, доход +25%, качество ниже",1.25,-.3],["Платная","Доход ниже, качество выше",.9,.3],["Подписка","Ровный доход",1.1,0]];
+const THS=["Фэнтези","Космос","Современность","Ужасы","Комедия","Пираты","Киберпанк","Сказки"];
+const FTG=[["Облачные сохранения",800,.3,1],["Таблица рекордов",600,.2,1],["Достижения",500,.2,2],["Ежедневные награды",700,.3,3],["Озвучка",1200,.4,4],["Мультиплеер",2500,.7,6],["Редактор уровней",2000,.5,8],["Кастомизация героя",900,.3,10]];
+const FTA=[["Push-уведомления",700,.3,1],["Тёмная тема",400,.2,1],["Оффлайн-режим",900,.3,3],["Облачная синхронизация",1500,.4,6],["Виджет",1100,.3,8],["ИИ-помощник",3000,.8,12]];
+const FT=()=>W&&W.ap?FTA:FTG,DUAL=()=>Math.round(3000*(1+S.lvl*.3));
+const syn=d=>d.ap?0:((d.g*7+(d.th||0)*3)%5==0?.6:0);
+const devQ=d=>SZ[d.sz??1][4]+syn(d)+AUD[d.au??1][3]+MON[d.mn??0][3]+(d.ft||[]).reduce((a,i)=>a+((d.ap?FTA:FTG)[i]||[0,0,0])[2],0);
+function devInc(gm,d){gm.mx=SZ[d.sz??1][5]*AUD[d.au??1][2]*MON[d.mn??0][2];gm.inc*=gm.mx;if(d.o=="b"){gm.port=1;gm.inc*=1.6}if(d.lg0)gm.lg=[0];gm.ft=d.ft||[]}
+function wzCost(){const f=1+S.lvl*.3;return Math.round(((SZ[W.sz??1][2])+(W.o=="b"?3000:0)+(W.ft||[]).reduce((a,i)=>a+FT()[i][1],0)+(W.lg0?LNG[0][1]:0))*f)}
+function wzFt(i){W.ft=W.ft||[];const k=W.ft.indexOf(i);k>=0?W.ft.splice(k,1):W.ft.push(i);wizard()}
+/* языки и мировой рынок */
+const LNG=[["Английский",30000,.25],["Испанский",20000,.15],["Китайский",50000,.3],["Японский",30000,.18],["Немецкий",20000,.12],["Французский",20000,.12],["Португальский",15000,.1],["Корейский",25000,.15],["Хинди",15000,.12],["Арабский",20000,.12]];
+const lgM=g=>1+(g.lg||[]).reduce((a,i)=>a+LNG[i][2],0),lgC=i=>Math.round(LNG[i][1]*(1+S.lvl*.2));
+function lgBuy(id,i){const g=S.games.find(x=>x.id==id);if(!g||(g.lg||[]).includes(i)||S.money<lgC(i))return;S.money-=lgC(i);g.lg=(g.lg||[]).concat(i);toast("Язык добавлен: "+LNG[i][0]);draw()}
+function lgView(){if(S.lvl<4)return lkx("Языки","с 4 уровня");const g=S.games.find(x=>x.id==S.lgs)||S.games[0];
+ return `<div class="card"><h3>Языки и мировой рынок</h3><p class="dim" style="margin:0">Купленный язык открывает новый рынок и увеличивает доход игры.${S.gl?" Сейчас в мире: "+S.gl.n+" ("+(S.gl.mul>0?"+":"")+Math.round(S.gl.mul*100)+"% к доходу).":""}</p></div>
+ ${g?`<div class="card"><h3>Игра</h3><div class="opts">${S.games.map(x=>`<button class="opt ${x.id==g.id?"on":""}" onclick="S.lgs=${x.id};draw()">${esc(x.n)}</button>`).join("")}</div></div><div class="card"><h3>Языки: ${(g.lg||[]).length} из ${LNG.length}</h3><div class="bar" style="margin:8px 0 12px"><i style="width:${(g.lg||[]).length/LNG.length*100}%"></i></div>${LNG.map((l,i)=>{const own=(g.lg||[]).includes(i);return `<div class="row" style="animation:up .5s var(--e) ${i*.04}s both"><div class="av">${l[0][0]}</div><div class="t"><b>${l[0]}</b><small>доход +${Math.round(l[2]*100)}%</small></div>${own?`<span class="tag">Куплено</span>`:`<button class="btn s" ${S.money<lgC(i)?"disabled":""} onclick="lgBuy(${g.id},${i})">${money(lgC(i))}</button>`}</div>`}).join("")}</div>`:`<div class="card"><p class="dim" style="margin:0">Сначала выпусти игру.</p></div>`}`}
+/* мировые события */
+const GLB=[["Мировой кризис",-.3,12],["Технологический бум",.3,12],["Время карантина",.4,8],["Мода на ретро",.2,10],["Рекордные продажи консолей",.25,10],["Конкуренция гигантов",-.15,10]];
+function glbYear(){if(!S.gl&&Math.random()<.4){const e=pk(GLB);S.gl={n:e[0],mul:e[1],left:e[2]};toast("Мировое событие: "+e[0])}}
+function glbTick(){if(S.gl&&--S.gl.left<=0)S.gl=null}
+/* журнал, статистика, достижения */
+function jr(t){S.jr=S.jr||[];S.jr.unshift({t,y:S.y,m:S.m});if(S.jr.length>40)S.jr.pop()}
+function jrView(){return `<div class="card"><h3>Журнал</h3>${(S.jr||[]).length?S.jr.map((x,i)=>`<div class="row" style="animation:up .5s var(--e) ${Math.min(i,10)*.04}s both"><div class="t">${esc(x.t)}<small>${NM[x.m]} ${x.y}</small></div></div>`).join(""):`<p class="dim" style="margin:0">Здесь будут записаны важные события студии.</p>`}</div>`}
+function chartSvg(a){if(a.length<2)return `<p class="dim" style="margin:0">График появится через пару месяцев.</p>`;const W=340,H=130,mx=Math.max(...a,1),mn=Math.min(...a,0),p=a.map((v,i)=>[i/(a.length-1)*W,H-8-(v-mn)/(mx-mn||1)*(H-20)]),d=p.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ");
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><path d="${d} L${W} ${H} L0 ${H} Z" fill="var(--ac)" opacity=".12"/><path d="${d}" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" style="animation:ln 1.2s var(--e) both"/></svg>`}
+function statView(){const inc=S.games.reduce((a,g)=>a+g.inc*evMul(g)*(1+(g.h||0)/100)*lgM(g),0),avg=S.games.length?S.games.reduce((a,g)=>a+g.sc,0)/S.games.length:0,ap=S.games.filter(g=>g.ap).length,lg=S.games.reduce((a,g)=>a+(g.lg||[]).length,0);
+ return `<div class="card"><h3>Деньги по месяцам</h3>${chartSvg(S.hist||[])}</div><div class="card"><h3>Показатели</h3><div class="st3" style="margin:0 0 12px"><div><b>${S.games.length}</b><small>Проектов</small></div><div><b>${avg.toFixed(1)}</b><small>Средняя оценка</small></div><div><b>${mh(inc)}</b><small>Доход в месяц</small></div></div><div class="st3" style="margin:0"><div><b>${ap}</b><small>Приложений</small></div><div><b>${lg}</b><small>Языков</small></div><div><b>${mh(S.tot||0)}</b><small>Всего заработано</small></div></div></div><div class="card"><h3>Мир</h3><p class="dim" style="margin:0">${S.gl?S.gl.n+": "+(S.gl.mul>0?"+":"")+Math.round(S.gl.mul*100)+"% к доходу, осталось месяцев: "+S.gl.left:"Сейчас в мире спокойно."}</p></div>`}
+function achView(){const n=AC.filter(a=>a[1]()).length;return `<div class="card"><h3>Достижения: ${n} из ${AC.length}</h3><div class="bar" style="margin-top:12px"><i style="width:${n/AC.length*100}%"></i></div></div><div class="card">${AC.map((a,i)=>{const ok=a[1]();return `<div class="row" style="${ok?"":"opacity:.5;"}animation:up .4s var(--e) ${Math.min(i,12)*.03}s both"><div class="av" style="${ok?"background:var(--ok);color:#fff":""}">${svg(ok?"check":"lock",20)}</div><div class="t"><b>${a[0]}</b></div></div>`}).join("")}</div>`}
+TABS.push(["Языки","globe"],["Статистика","chart"],["Журнал","book"],["Достижения","medal"]);
+Object.assign(I,{globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',chart:'<path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/>',book:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>',medal:'<circle cx="12" cy="9" r="5"/><path d="M9 13l-2 8 5-3 5 3-2-8"/>'});
+Object.assign(NLV,{16:1,22:4});delete SP[6];Object.assign(NEWV,{22:lgView,23:statView,24:jrView,25:achView});
+Object.assign(TOURS,{22:[["#main .card","Языки открывают новые рынки. Каждый язык увеличивает доход выбранной игры."]],23:[["#main .card","Здесь график денег и главные показатели студии."]],24:[["#main .card","Журнал хранит важные события студии."]],25:[["#main .card","Все достижения в одном месте."]]});
+AC.push(["Первая локализация",()=>S.games.some(g=>(g.lg||[]).length)],["Пять языков",()=>S.games.some(g=>(g.lg||[]).length>=5)],["Сразу на двух платформах",()=>S.games.some(g=>g.o=="b")],["Большой проект",()=>S.games.some(g=>(g.mx||0)>=1.3)],["Три функции в игре",()=>S.games.some(g=>(g.ft||[]).length>=3)],["Командный бонус",()=>!!CO.ok],["Командная цель",()=>S.tg.length>=1],["Пережил мировое событие",()=>!!S.gl]);
+GL.push(["Купи язык",()=>S.games.some(g=>(g.lg||[]).length>0),12000,150],["Сделай игру сразу на двух платформах",()=>S.games.some(g=>g.o=="b"),30000,300],["Добавь 3 функции в игру",()=>S.games.some(g=>(g.ft||[]).length>=3),20000,250]);
+DEC.push(["Перевод","Фанаты предлагают перевести игру.",["Принять помощь",0,40,15,0],["Заказать профессиональный перевод",-800,30,25,.1]],["Скидочная неделя","Магазин приглашает участвовать в распродаже.",["Участвовать",-300,20,35,0],["Отказаться",0,5,0,0]],["Новый жанр","Тебе предлагают попробовать необычный жанр.",["Попробовать",-500,60,10,.2],["Остаться в привычном",0,15,0,0]],["Награда студии","Студию отметили на выставке.",["Принять награду",0,50,20,0]],["Конкурс идей","Игроки предлагают идеи для игры.",["Выбрать лучшую",-200,60,20,.1],["Использовать все",-800,90,10,0]],["Спонсор","Спонсор хочет поддержать студию.",["Взять спонсорство",3000,0,0,0],["Отказаться",0,30,0,0]]);
+/* друзья: новые функции */
+Object.assign(CO,{rtt:0,pp:0,ftab:null,t0:0,sent:0,rx:0,rel0:null});
+const REACT=["👍","🎉","😂","❤️"];
+function coRaw(o){if(CO.ok&&CO.dc&&CO.dc.readyState=="open")CO.dc.send(JSON.stringify(o))}
+setInterval(()=>{if(CO.ok)coRaw({pg:Date.now()})},5000);
+function floatEmoji(e){const d=document.createElement("div");d.textContent=e;d.className="fe";d.style.left=(20+Math.random()*60)+"vw";document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+const TGL=[["Проведите 5 минут вместе",()=>CO.t0&&Date.now()-CO.t0>3e5,5000,2],["Отправьте 5 сообщений",()=>CO.sent>=5,3000,1],["Выпустите проект вместе",()=>CO.rel0!=null&&S.games.length>CO.rel0,10000,3],["Обменяйтесь 5 реакциями",()=>CO.rx>=5,3000,1]];
+function tgGet(i){if(S.tg.includes(i)||!TGL[i][1]())return;S.tg.push(i);S.money+=TGL[i][2];S.sc=(S.sc||0)+TGL[i][3];toast("Командная награда получена");conf();draw()}
+function tgCard(){if(!CO.ok)return "";return `<div class="card"><h3>Командные цели</h3>${TGL.map((g,i)=>{const done=S.tg.includes(i),ok=g[1]();return `<div class="row"><div class="av" style="${done||ok?"background:var(--ok);color:#fff":""}">${svg(done||ok?"check":"flag",20)}</div><div class="t"><b>${g[0]}</b><small>Награда: ${money(g[2])} и ${g[3]} Син коин.</small></div>${done?`<span class="tag">Получено</span>`:`<button class="btn s" ${ok?"":"disabled"} onclick="tgGet(${i})">Забрать</button>`}</div>`}).join("")}</div>`}
+/* установка и файл игры */
+let dip=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();dip=e});
+function dlGame(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([SRC],{type:"text/html"}));a.download="igra-sozdavat-igry.html";a.click();toast("Файл игры скачан")}
+function instApp(){if(dip){dip.prompt();return}
+ mgShell(`<div class="sh"><h2>Установка</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p style="margin:12px 0 0">На iPhone: открой игру в Safari, нажми «Поделиться» и выбери «На экран Домой».</p><p>В Chrome на Android: меню с тремя точками, затем «Установить приложение» или «Добавить на главный экран».</p><p class="dim">Иконка приложения уже встроена: её увидят и Safari, и Chrome.</p>`,true)}
+function apkInfo(){mgShell(`<div class="sh"><h2>Как получить APK</h2><button class="rb" onclick="closeM()" aria-label="Закрыть">${svg("x")}</button></div><p style="margin:12px 0 0">Настоящий APK-файл нельзя собрать внутри самой игры: для него нужны Android Studio или онлайн-сервис вроде PWABuilder, подпись приложения и адрес сайта.</p><p>Что можно сделать прямо сейчас: скачать игру файлом, установить её как приложение на главный экран или выложить файл на любой хостинг и собрать APK через PWABuilder. Иконки и манифест для этого уже готовы.</p>`,true)}
+function hire(k,c){if(hc()>=cap())return toast("Лимит сотрудников растёт с уровнем");const q=ST.find(x=>x[0]==k);if(S.lvl<q[3])return toast("Откроется с "+q[3]+" уровня");if(S.money<c)return toast("Не хватает денег");S.money-=c;S.st[k]=(S.st[k]||0)+1;draw()}
+function buyPC(i){if(S.money<PC[i][1])return toast("Не хватает денег");S.money-=PC[i][1];S.pc=i;toast("Куплен новый компьютер");draw()}
+/* вкладки */
+function view(a){
+ const t=S.tab,d=S.dev;let h="";
+ if(t==0)h=`<div class="st3" style="margin:0"><div><b>${S.lvl}</b><small>Уровень</small></div><div><b>${S.games.length}</b><small>Проектов</small></div><div><b>${mh(incM())}</b><small>Доход в месяц</small></div></div><div class="card hero"><span class="tag" style="margin-bottom:12px">Тренд ${S.y} года: ${G[TG()][0]}</span><h2>${d?(d.port?"Порт на телефон":d.upd?"Обновление в разработке":"Игра в разработке"):"Готов создать игру?"}</h2>
+ ${d?`<div class="row f" style="padding:16px 0">${ico(d,"l")}<div class="t"><b>${d.n}</b><small>${GN(d)[0]}, ${d.o=="v"?"вертикальное":d.o=="b"?"обе платформы":"горизонтальное"} расположение</small></div></div><div class="bar"><i id="pb" style="width:${lastP}%"></i></div><p class="dim" style="margin-bottom:20px">${d.ready?"Игра готова. Осталось опубликовать её.":"Готово на <span id=pt>"+Math.min(100,Math.round(d.p))+"</span>%. Скорость: "+speed()*4+" очков в месяц."}</p>`:`<p>Выбери жанр, название и иконку, и студия начнёт работу.</p>`}
+ ${d&&d.ready?`<button class="btn glow" onclick="publish()">${d.o=="h"?"Найти игру на компьютере":"Пройти головоломку"}</button>`:`<button class="btn ${d?"":"glow"}" onclick="openW()" ${d?"disabled":""}>${svg("plus",20)}Создать игру</button>`}</div>
+ <div class="card"><h3>Сообщество</h3>${S.msgs.length?S.msgs.slice(0,5).map(m=>{const g=S.games.find(x=>x.id==m.gid);return g?`<div class="row"><div class="t">Ваша игра «${esc(g.n)}» очень понравилась сообществу. Они ждут обновление.<small>${NM[m.m]} ${m.y}</small></div><button class="btn s" ${S.dev?"disabled":""} onclick="startUpd(${g.id})">Обновить</button></div>`:""}).join(""):`<p class="dim" style="margin:0">Пока тихо. Выпускай игры с высокой оценкой, и сообщество начнёт просить обновления.</p>`}</div>
+ <div class="card"><h3>Отзывы игроков</h3>${S.games.length?S.games.slice(0,3).flatMap(g=>(g.rv||[]).slice(0,2).map(r=>({...r,gn:g.n}))).slice(0,4).map(r=>`<div class="row"><div class="av">${r.u[0]}</div><div class="t"><div class="stars">${stars(r.s)}</div>${r.t}<small>${r.u} · «${esc(r.gn)}»</small></div></div>`).join(""):`<p class="dim" style="margin:0">Отзывы появятся после выхода первой игры.</p>`}</div>${appCard()}`;;
+ if(t==1)h=`<div class="card"><h3>Нанять сотрудников · ${hc()} из ${cap()}</h3>${STV().map(s=>{const c=price(s[0],s[2]),lk=S.lvl<s[3];return `<div class="row" style="${lk?"opacity:.55":""}"><div class="av">${lk?svg("lock",20):s[1][0]}</div><div class="t"><b>${s[1]}</b> · в штате ${pow(s[0])}<small>${lk?"Откроется с "+s[3]+" уровня":"Зарплата "+Math.round(s[2]/40)+" $ в месяц"}</small></div><button class="btn s" ${lk||S.money<c||hc()>=cap()?"disabled":""} onclick="hire('${s[0]}',${c})">${lk?"Закрыто":money(c)}</button></div>`}).join("")}</div>`;
+ if(t==2)h=`<div class="card"><h3>Мои игры</h3>${S.games.length?S.games.map(g=>`<div class="row">${ico(g)}<div class="t"><b>${esc(g.n)}</b>${g.v>1?" · v"+g.v:""}<small>${GN(g)[0]} · ${g.y} · ${g.o=="v"?"вертикальная":g.o=="b"?"обе платформы":"горизонтальная"}</small><div class="stars">${stars(g.sc/2)}<span class="dim" style="margin-left:6px">${(g.sc/2).toFixed(1)}</span></div><div style="margin-top:8px"><small>Ажиотаж ${Math.round(g.h||0)}%</small><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,g.h||0)}%"></i></div></div><div class="acts"><button class="btn o s" onclick="showRv(${g.id})">Отзывы</button><button class="btn s" ${S.dev?"disabled":""} onclick="startUpd(${g.id})">Обновить</button>${g.pl?`<button class="btn s" onclick="platform(${g.id})">Плейсы (${g.pl.p.filter(p=>p.me).length})</button>`:g.sc>=9?`<button class="btn s" ${S.money<PLC?"disabled":""} onclick="plUp(${g.id})">Платформа ${money(PLC)}</button>`:""}${PORTBTN(g)}${FAVBTN(g)}<button class="rb gb" style="margin-left:auto" onclick="gameSet(${g.id})" aria-label="Настройки игры">${svg("gear",20)}</button></div>${!g.pl&&g.sc<9?`<small>Платформа плейсов откроется при пяти звёздах</small>`:""}</div><b style="color:var(--ok)">+${money(g.inc)}</b></div>`).join(""):`<p class="dim">Пока пусто. Нажми «Создать игру» на вкладке «Студия».</p>`}</div>`;
+ if(t==3)h=evTL();
+ if(t==5)h=wkView();
+ if(t==6)h=crView();
+ if(t==7)h=auView();
+ if(t==8)h=techView();
+ if(t==9)h=popView();
+ if(t==10)h=shopView();
+ if(t==11)h=colView();
+ if(t==12)h=bankView();
+ if(t==13)h=qrView();
+ if(t>=14&&t<=25)h=(NEWV[t]||(()=>""))();
+ if(t==4)h=`<div class="card"><h3>Профиль студии</h3><span class="tag" style="margin-right:6px">${rank()}</span>${(S.vz||0)?`<span class="tag" style="margin-right:6px">Возрождений: ${S.vz}</span>`:""}${S.title?`<span class="tag">${S.title}</span>`:""}<div class="row f" style="padding:16px 0 0"><div class="avt" style="width:72px;height:72px;font-size:28px;${S.av?`background:url(${S.av}) center/cover;color:transparent`:""}">${S.av?"":S.sn[0].toUpperCase()}</div><div class="t"><b>Аватар</b><div class="foot" style="margin:8px 0 0"><label class="btn o s" style="margin:0">Фото<input type="file" accept="image/*" hidden onchange="avUp(this)"></label>${S.av?`<button class="btn o s" onclick="S.av=null;save();draw()">Убрать</button>`:""}</div></div></div><label>Название студии</label><input type="text" maxlength="24" value="${S.sn}" oninput="S.sn=this.value||'Моя студия';$('sn').textContent=S.sn;save()">
+ <label>Цвет студии</label><div class="g8">${CL.map((c,i)=>`<button class="sw ${S.col==i?"on":""}" style="background:${c}" onclick="S.col=${i};draw()" aria-label="Цвет ${i+1}"></button>`).join("")}</div></div>
+ <div class="card"><h3>Прогресс</h3><p class="dim" style="margin:0 0 16px">Сброс удалит все игры, команду и деньги.</p><button class="btn o" onclick="ask('Начать с нуля? Прогресс сотрётся.',()=>{S=def();fix();lastP=0;save();closeM();draw(true)})">Сбросить прогресс</button></div>
+ ${vzCard()}${rbCard()}<div class="card"><h3>Достижения: ${AC.filter(a=>a[1]()).length} из ${AC.length}</h3>${acV().map(a=>{const ok=a[1]();return `<div class="row" style="${ok?"":"opacity:.5"}"><div class="av" style="${ok?"background:var(--ok);color:#fff":""}">${svg(ok?"check":"lock",20)}</div><div class="t"><b>${a[0]}</b></div></div>`}).join("")}</div>`;
+ $("main").innerHTML=`<div class="pg ${a?"pg-in":""}">${h}</div>`;
+ const pb=$("pb");if(pb)requestAnimationFrame(()=>requestAnimationFrame(()=>{pb.style.width=Math.min(100,d.p)+"%";lastP=Math.min(100,d.p)}))}
+function draw(a){applyTheme();if(CO.role=="g"&&CO.ok&&!CO.ad){CO.t=Date.now();coSend("a")}
+ $("sn").textContent=S.sn;$("sn").style.color=CL[S.col];$("yr").textContent=NM[S.m]+" "+S.y+(CO.ok?" · друг онлайн":"");if(!twOn)tw();$("spd").textContent="x"+S.spd;
+ if(S.money>lastM&&lastM>=0){$("mn").classList.remove("pop");void $("mn").offsetWidth;$("mn").classList.add("pop")}lastM=S.money;
+ $("xp").style.width=(S.xp/need()*100)+"%";
+ if(!$("ind"))$("bar").innerHTML=`<div class="ind" id="ind"><i></i></div>`+BAR.map(i=>`<button class="bt" onclick="go(${i})">${svg(TABS[i][1])}${TABS[i][0]}</button>`).join("");
+ $("ind").style.transform=`translateX(${Math.max(0,BAR.indexOf(S.tab))*100}%)`;$("ind").style.opacity=BAR.includes(S.tab)?1:0;document.querySelectorAll(".bt").forEach((b,i)=>b.classList.toggle("on",BAR[i]==S.tab));
+ const f=document.activeElement;if(f&&(f.tagName=="INPUT"||f.tagName=="TEXTAREA"))return;view(a)}
+$("mb").innerHTML=svg("menu");$("mb").onclick=()=>menu(true);$("sc").onclick=()=>menu(false);
+document.addEventListener("keydown",e=>{if(e.key=="Escape"){menu(false);closeM()}});
+$("spd").onclick=()=>{const a=[1,2,4].concat((S.spu||[]).slice().sort((x,y)=>x-y)),i=a.indexOf(S.spd);S.spd=a[(i+1)%a.length]||1;draw();loop()};
+const DF={e:{n:"Легко",i:1.5,s:.7,v:1.3},m:{n:"Средне",i:1,s:1,v:1},h:{n:"Сложно",i:.7,s:1.4,v:.8}},df=()=>DF[S.df||"m"];
+function step(){if(CO.role=="g"&&CO.ok)return;if(CO.role=="h"&&CO.ok&&Date.now()-CO.l>1500)coSend("s");S.f=(S.f||0)+1;const d=S.dev;const sh=$("shT");if(sh&&S.shop){const r=Math.max(0,6e5-(Date.now()-S.shop.t));sh.textContent=fmtT(r);if(r==0){shopChk();draw()}}
+ if(d&&!d.ready){d.p+=speed()*4*(d.upd?1.6:1)*(S.games.length<2&&!d.upd?1.6:1)*df().v/60/(d.upd?1:SZ[d.sz??1][3]);if(d.p>=100){d.p=100;d.ready=1;draw()}const b=$("pb");if(b){b.style.width=Math.min(100,d.p)+"%";lastP=Math.min(100,d.p)}const t=$("pt");if(t)t.textContent=Math.round(Math.min(100,d.p))}
+ if(S.f>=60){S.f=0;tick()}else if(S.f%10==0)save()}
+const loop=()=>{clearInterval(tk);if(!document.hidden)tk=setInterval(step,1000/S.spd)};
+document.addEventListener("visibilitychange",loop);
+function fix(){if(S.tab==20||S.tab==21)S.tab=0;S.tech=S.tech||{};S.bk=S.bk||{dep:0,debt:0,due:0,px:null,pv:null,hold:{}};const d=def();for(const k in d)if(S[k]==null)S[k]=d[k];S.msgs=S.msgs||[];S.ev=S.ev||[];S.res=S.res||[];S.df=S.df||"m";S.codes=S.codes||[];S.pc=0;S.cr=S.cr||{c:[],n:null,w:0,l:0};S.au=S.au||{on:0,g:[],y:0};S.pr=S.pr||[];S.games.forEach(g=>{if(!g.id)g.id=Date.now()+Math.random();if(!g.a)g.a=snap();if(!g.rv||!g.rv.length)g.rv=genRev(g,3);if(g.cd==null)g.cd=0});}
+fix();
+if(S.up)setTimeout(showUp,1200);
+draw(true);loop();pixHide();setIcons();
+if(!S.seen)setTimeout(()=>pixTour('start'),500);
+</script></body></html>
